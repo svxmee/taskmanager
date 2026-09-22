@@ -1,6 +1,6 @@
 namespace TaskManager.Models;
 
-public class TaskClassification
+public class TaskClassification // определяем категорию приоритет и дедлайн для каждой задачи
 {
     public TaskCategory Category {get; set;}
     public TaskPriority Priority {get; set;}

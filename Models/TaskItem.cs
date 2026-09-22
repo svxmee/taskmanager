@@ -1,6 +1,6 @@
-namespace TaskManager.Models;
+namespace TaskManager.Models; // указывает что этот класс относится к разделу Models
 
-public class TaskItem
+public class TaskItem // общий класс определяющий каждую задачу
 {
     public int Id {get; set; }
     public string Text {get; set; }  = string.Empty;
