@@ -1,6 +1,6 @@
 namespace TaskManager.Models;
 
-public enum TaskCategory //просто перечисляем каждую категорию
+public enum TaskCategory // просто перечисляем каждую категорию
 {
     Study,
     Work,

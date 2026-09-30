@@ -1,6 +1,57 @@
-@Новая_папка_HostAddress = http://localhost:5180
+@TaskManager_HostAddress = https://localhost:5180
 
-GET {{Новая_папка_HostAddress}}/weatherforecast/
-Accept: application/json
+### 1. Получить все задачи
+GET {{TaskManager_HostAddress}}/api/Tasks
 
 ###
+
+### 2. Создать первую задачу
+POST {{TaskManager_HostAddress}}/api/Tasks
+Content-Type: application/json
+
+{
+  "text": "сделать лабораторную завтра",
+  "category": 0,
+  "priority": 0,
+  "deadline": null,
+  "isCompleted": false
+}
+
+###
+
+### 3. Получить все задачи после создания
+GET {{TaskManager_HostAddress}}/api/Tasks
+
+###
+
+### 4. Получить задачу по ID
+GET {{TaskManager_HostAddress}}/api/Tasks/1
+
+###
+
+### 5. Изменить задачу
+PUT {{TaskManager_HostAddress}}/api/Tasks/1
+Content-Type: application/json
+
+{
+  "text": "сдать лабораторную",
+  "category": 0,
+  "priority": 2,
+  "deadline": null,
+  "isCompleted": true
+}
+
+###
+
+### 6. Получить изменённую задачу
+GET {{TaskManager_HostAddress}}/api/Tasks/1
+
+###
+
+### 7. Удалить задачу
+DELETE {{TaskManager_HostAddress}}/api/Tasks/1
+
+###
+
+### 8. Проверить, что задача удалена
+GET {{TaskManager_HostAddress}}/api/Tasks

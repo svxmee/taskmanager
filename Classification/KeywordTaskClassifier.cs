@@ -1,4 +1,4 @@
-using System.Security.Cryptography.X509Certificates;
+using System.Text.RegularExpressions;
 using TaskManager.Models;
 
 namespace TaskManager.Classification;
@@ -50,24 +50,89 @@ public class KeywordTaskClassifier : ITaskClassifier
         {
             category = TaskCategory.Shopping;
         }
+
+        else if (personalWords.Any(word => textLower.Contains(word)))
+        {
+            category = TaskCategory.Personal;
+        }
+
         else
         {
             category = TaskCategory.Other;
         }
 
-        TaskCategory priority;
+        TaskPriority priority = TaskPriority.Medium;
 
-        string[] lowWords = {""};
-        string[] mediumWords = {""};
-        string[] highWords = {""};
+        string[] lowWords = {
+            "можн", "неважн", "если успе", "по желан", "когда будет врем",
+            "не срочн", "необязательн", "потом", "когда-нибудь", "желательн"
+        };
 
-        if (lowWords.Any(word => textLower.Contains(word)))
+        string[] mediumWords = {
+            "нужн", "надо", "следует", "сдела", "подготов",
+            "занима", "реш", "провер", "законч", "выполн"
+        };
+
+        string[] highWords = {
+            "срочн", "важн", "немедлен", "сегодня", "сейчас",
+            "как можно скоре", "до завтра", "дедлайн", "горит",
+            "обязательн", "критич", "нельзя забы"
+        };
+
+        if (highWords.Any(word => textLower.Contains(word)))
+        {
+            priority = TaskPriority.High;
+        }
+
+        else if (mediumWords.Any(word => textLower.Contains(word)))
+        {
+            priority = TaskPriority.Medium;
+        }
+
+
+        else if (lowWords.Any(word => textLower.Contains(word)))
+        {
+            priority = TaskPriority.Low;
+        }
+
+        DateTime? deadline = null;
+
+        if (textLower.Contains("сегодня"))
+        {
+            deadline = DateTime.Today;
+        }
+
+        else if (textLower.Contains("послезавтра"))
+        {
+            deadline = DateTime.Today.AddDays(2);
+        }
+
+        else if (textLower.Contains("завтра"))
+        {
+            deadline = DateTime.Today.AddDays(1);
+        }
+        
+        else if (textLower.Contains("через неделю"))
+        {
+            deadline = DateTime.Today.AddDays(7);
+        }
+
+        else
+        {
+            Match match = Regex.Match(textLower, @"через (\d+) дней?"); // используем regex для определения шаблона "через n дней"
+
+            if (match.Success)
+            {
+                int days = int.Parse(match.Groups[1].Value);
+                deadline = DateTime.Today.AddDays(days);
+            }
+        }
 
         TaskClassification result = new TaskClassification
         {
-            Category = TaskCategory.Other,
-            Priority = TaskPriority.Medium,
-            Deadline = null
+            Category = category,
+            Priority = priority,
+            Deadline = deadline,
         };
 
         return result;
