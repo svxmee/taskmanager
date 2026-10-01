@@ -3,13 +3,18 @@ using TaskManager.Classification;
 using TaskManager.Data;
 using TaskManager.Models;
 using TaskManager.Services;
-
+DotNetEnv.Env.Load();
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.Converters.Add(
+            new System.Text.Json.Serialization.JsonStringEnumConverter());
+    });
 builder.Services.AddScoped<ITaskService, TaskService>();
 builder.Services.AddScoped<ITaskRepository, TaskRepository>();
-builder.Services.AddScoped<ITaskClassifier, KeywordTaskClassifier>();
+builder.Services.AddScoped<ITaskClassifier, AiTaskClassifier>();
 builder.Services.AddOpenApi();
 
 builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
