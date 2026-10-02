@@ -1,13 +1,156 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TaskManager</title>
-    <link rel="stylesheet" href="style.css">
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="TaskManager — список задач с автоматической классификацией по категории, приоритету и дедлайну." />
+    <title>TaskManager — задачи с авто-классификацией</title>
+
+    <!-- Шрифт Plus Jakarta Sans (Google Fonts) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+    <!-- Свои стили -->
+    <link rel="stylesheet" href="style.css" />
 </head>
-
 <body>
+    <!-- ===================== ШАПКА ===================== -->
+    <header class="app-header">
+        <div class="container app-header__inner">
+            <span class="brand__mark" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M9 11l3 3L22 4"></path>
+                    <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                </svg>
+            </span>
+            <div class="brand">
+                <h1 class="brand__title">TaskManager</h1>
+                <p class="brand__subtitle">Категория, приоритет и дедлайн подставляются автоматически при создании задачи.</p>
+            </div>
+        </div>
+    </header>
 
+    <!-- ============== ОБЛАСТЬ УВЕДОМЛЕНИЙ ============== -->
+    <!-- role="status" + aria-live: скринридер озвучивает текст, появившийся тут -->
+    <div class="container">
+        <div id="notifications" class="notifications" role="status" aria-live="polite" aria-atomic="true"></div>
+    </div>
+
+    <main class="container app-main">
+        <!-- ===================== СОЗДАНИЕ ЗАДАЧИ ===================== -->
+        <section class="panel" aria-labelledby="create-title">
+            <h2 id="create-title" class="panel__title">Новая задача</h2>
+
+            <!-- novalidate: своя валидация с понятной ошибкой рядом с полем -->
+            <form id="task-form" class="task-form" novalidate>
+                <div class="field">
+                    <label class="field__label" for="task-text">Текст задачи</label>
+                    <textarea
+                        id="task-text"
+                        name="text"
+                        class="field__input"
+                        rows="2"
+                        required
+                        placeholder="Например: подготовить лабораторную к завтрашнему дню"
+                        aria-describedby="task-text-hint task-text-error"></textarea>
+                    <p id="task-text-hint" class="field__hint">
+                        Опишите задачу обычным текстом — категорию, приоритет и дедлайн система определит сама.
+                    </p>
+                    <!-- Инлайн-ошибка: рядом с полем и озвучивается (role="alert") -->
+                    <p id="task-text-error" class="field__error" role="alert" hidden></p>
+                </div>
+
+                <button id="task-submit" class="btn btn--primary" type="submit">
+                    <span class="btn__spinner" aria-hidden="true"></span>
+                    <span class="btn__label">Добавить задачу</span>
+                </button>
+            </form>
+        </section>
+
+        <!-- ===================== ФИЛЬТРЫ ===================== -->
+        <section class="panel" aria-labelledby="filters-title">
+            <h2 id="filters-title" class="panel__title">Фильтры</h2>
+            <div class="filters">
+                <div class="field">
+                    <label class="field__label" for="filter-category">Категория</label>
+                    <select id="filter-category" class="field__input field__select">
+                        <option value="">Все категории</option>
+                        <option value="Study">Учёба</option>
+                        <option value="Work">Работа</option>
+                        <option value="Shopping">Покупки</option>
+                        <option value="Personal">Личное</option>
+                        <option value="Other">Другое</option>
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label class="field__label" for="filter-priority">Приоритет</label>
+                    <select id="filter-priority" class="field__input field__select">
+                        <option value="">Все приоритеты</option>
+                        <option value="High">Высокий</option>
+                        <option value="Medium">Средний</option>
+                        <option value="Low">Низкий</option>
+                    </select>
+                </div>
+
+                <button id="filters-reset" class="btn btn--ghost" type="button">Сбросить фильтры</button>
+            </div>
+        </section>
+
+        <!-- ===================== СПИСОК ЗАДАЧ ===================== -->
+        <section class="panel" aria-labelledby="tasks-title">
+            <div class="panel__head">
+                <h2 id="tasks-title" class="panel__title">Задачи</h2>
+                <p id="tasks-count" class="tasks-count" aria-live="polite"></p>
+            </div>
+
+            <!-- Состояние загрузки списка -->
+            <p id="tasks-loading" class="tasks-loading" role="status" hidden>Загружаем задачи…</p>
+
+            <!-- Список задач: семантически <ul>, элементы — <li> -->
+            <ul id="task-list" class="task-list"></ul>
+
+            <!-- Пустое состояние -->
+            <div id="empty-state" class="empty-state" hidden>
+                <p class="empty-state__title">Пока задач нет</p>
+                <p class="empty-state__text">Добавьте первую задачу в форме выше — она появится здесь.</p>
+            </div>
+        </section>
+    </main>
+
+    <!-- ===================== ПОДВАЛ ===================== -->
+    <footer class="app-footer">
+        <div class="container">
+            <p>TaskManager — учебный проект (C# / ASP.NET Core + обычный HTML/CSS/JS)</p>
+        </div>
+    </footer>
+
+    <!-- ============ ШАБЛОН КАРТОЧКИ ЗАДАЧИ ============ -->
+    <!-- <template> хранит разметку, но не показывает её. JS клонирует её для каждой задачи -->
+    <template id="task-card-template">
+        <li class="task-card" data-id="">
+            <article class="task-card__body">
+                <div class="task-card__top">
+                    <h3 class="task-card__text"></h3>
+                    <span class="task-card__status" data-status hidden></span>
+                </div>
+
+                <div class="task-card__badges">
+                    <span class="badge badge--category" data-category=""></span>
+                    <span class="badge badge--priority" data-priority=""></span>
+                    <time class="badge badge--deadline" data-deadline hidden></time>
+                </div>
+
+                <div class="task-card__actions">
+                    <button class="btn btn--complete" type="button" data-action="complete">Завершить</button>
+                    <button class="btn btn--danger" type="button" data-action="delete">Удалить</button>
+                </div>
+            </article>
+        </li>
+    </template>
+
+    <!-- Логика: defer — скрипт выполнится после построения DOM -->
+    <script src="site.js" defer></script>
 </body>
 </html>

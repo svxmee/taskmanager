@@ -195,3 +195,6 @@ C:\Users\matve\OneDrive\Рабочий стол\работа\ДДС Урал п�
 C:\Users\matve\OneDrive\Рабочий стол\работа\ДДС Урал практика\TaskManager\bin\Debug\net10.0\DotNetEnv.dll
 C:\Users\matve\OneDrive\Рабочий стол\работа\ДДС Урал практика\TaskManager\bin\Debug\net10.0\OpenAI.dll
 C:\Users\matve\OneDrive\Рабочий стол\работа\ДДС Урал практика\TaskManager\bin\Debug\net10.0\Superpower.dll
+C:\Users\matve\OneDrive\Рабочий стол\работа\ДДС Урал практика\TaskManager\obj\Debug\net10.0\compressed\hm94sqjw05-{0}-8arh5gd30z-8arh5gd30z.gz
+C:\Users\matve\OneDrive\Рабочий стол\работа\ДДС Урал практика\TaskManager\obj\Debug\net10.0\compressed\uwrxta5w6u-{0}-3yrx7hsyxg-3yrx7hsyxg.gz
+C:\Users\matve\OneDrive\Рабочий стол\работа\ДДС Урал практика\TaskManager\obj\Debug\net10.0\compressed\jotjp8g1ld-{0}-wabgjg9j1z-wabgjg9j1z.gz

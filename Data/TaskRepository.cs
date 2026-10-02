@@ -11,9 +11,21 @@ public class TaskRepository : ITaskRepository
         _context = context;
     }
 
-    public List<TaskItem> GetTasks()
+    public List<TaskItem> GetTasks(TaskCategory? category, TaskPriority? priority)
     {
-        return _context.Tasks.ToList();
+        var query = _context.Tasks.AsQueryable();
+
+        if (category != null)
+        {
+            query = query.Where(p => p.Category == category);
+        }
+
+        if (priority != null)
+        {
+            query = query.Where(p => p.Priority == priority);
+        }
+
+        return query.ToList();
     }
 
     public TaskItem? GetTask(int id)

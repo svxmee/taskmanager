@@ -7,16 +7,16 @@ namespace TaskManager.Services;
 public class TaskService : ITaskService
 {
     private readonly ITaskRepository _repository;
-    private readonly ITaskClassifier _classifier;
-    public TaskService(ITaskRepository repository, ITaskClassifier classifier) {
+    private readonly TaskClassifierFactory _classifier;
+    public TaskService(ITaskRepository repository, TaskClassifierFactory classifier) {
 
         _repository = repository;
         _classifier = classifier;
     }
 
-    public List<TaskItem> GetTasks()
+    public List<TaskItem> GetTasks(TaskCategory? category, TaskPriority? priority)
     {
-        return _repository.GetTasks();
+        return _repository.GetTasks(category, priority);
     }
 
     public TaskItem? GetTask(int id)
@@ -24,9 +24,10 @@ public class TaskService : ITaskService
         return _repository.GetTask(id);
     }
     
-    public TaskItem CreateTask(TaskItem task)
+    public TaskItem CreateTask(TaskItem task, ClassifierType classifierType)
     {
-        var classification = _classifier.Classify(task.Text);
+        var classifier = _classifier.GetTaskClassifier(classifierType);
+        var classification = classifier.Classify(task.Text);
 
         task.Category = classification.Category;
         task.Priority = classification.Priority;

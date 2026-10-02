@@ -14,7 +14,9 @@ builder.Services.AddControllers()
     });
 builder.Services.AddScoped<ITaskService, TaskService>();
 builder.Services.AddScoped<ITaskRepository, TaskRepository>();
-builder.Services.AddScoped<ITaskClassifier, AiTaskClassifier>();
+builder.Services.AddScoped<AiTaskClassifier>();
+builder.Services.AddScoped<KeywordTaskClassifier>();
+builder.Services.AddScoped<TaskClassifierFactory>();
 builder.Services.AddOpenApi();
 
 builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -28,6 +30,9 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseDefaultFiles();
+app.UseStaticFiles();
 
 app.MapControllers();
 

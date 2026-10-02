@@ -24,9 +24,9 @@ public class TasksController : ControllerBase
     }
     
     [HttpGet]
-    public IActionResult GetTasks()
+    public IActionResult GetTasks(TaskCategory? category, TaskPriority? priority)
     {
-        var tasks = _taskService.GetTasks();
+        var tasks = _taskService.GetTasks(category, priority);
         return Ok(tasks);
     }
 
