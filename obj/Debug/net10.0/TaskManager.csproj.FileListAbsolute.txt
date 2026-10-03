@@ -194,6 +194,6 @@ C:\Users\matve\OneDrive\Рабочий стол\работа\ДДС Урал п�
 C:\Users\matve\OneDrive\Рабочий стол\работа\ДДС Урал практика\TaskManager\bin\Debug\net10.0\DotNetEnv.dll
 C:\Users\matve\OneDrive\Рабочий стол\работа\ДДС Урал практика\TaskManager\bin\Debug\net10.0\OpenAI.dll
 C:\Users\matve\OneDrive\Рабочий стол\работа\ДДС Урал практика\TaskManager\bin\Debug\net10.0\Superpower.dll
-C:\Users\matve\OneDrive\Рабочий стол\работа\ДДС Урал практика\TaskManager\obj\Debug\net10.0\compressed\hm94sqjw05-{0}-saxzrj2gsb-saxzrj2gsb.gz
-C:\Users\matve\OneDrive\Рабочий стол\работа\ДДС Урал практика\TaskManager\obj\Debug\net10.0\compressed\jotjp8g1ld-{0}-0giflm53oo-0giflm53oo.gz
-C:\Users\matve\OneDrive\Рабочий стол\работа\ДДС Урал практика\TaskManager\obj\Debug\net10.0\compressed\uwrxta5w6u-{0}-za41szx4yz-za41szx4yz.gz
+C:\Users\matve\OneDrive\Рабочий стол\работа\ДДС Урал практика\TaskManager\obj\Debug\net10.0\compressed\hm94sqjw05-{0}-xgizpq19wx-xgizpq19wx.gz
+C:\Users\matve\OneDrive\Рабочий стол\работа\ДДС Урал практика\TaskManager\obj\Debug\net10.0\compressed\jotjp8g1ld-{0}-aqduisrktj-aqduisrktj.gz
+C:\Users\matve\OneDrive\Рабочий стол\работа\ДДС Урал практика\TaskManager\obj\Debug\net10.0\compressed\uwrxta5w6u-{0}-uqlyy7qn8f-uqlyy7qn8f.gz

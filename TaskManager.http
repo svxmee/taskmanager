@@ -1,4 +1,4 @@
-@TaskManager_HostAddress = https://localhost:5180
+@TaskManager_HostAddress = http://localhost:5180
 
 ### 1. Получить все задачи
 GET {{TaskManager_HostAddress}}/api/Tasks

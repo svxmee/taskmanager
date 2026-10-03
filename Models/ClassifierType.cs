@@ -1,6 +1,6 @@
 namespace TaskManager.Models;
 
-public enum ClassifierType
+public enum ClassifierType // перечисляем варианты как будем классифицировать задачи
 {
     AI,
     KeyWord

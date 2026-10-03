@@ -1,186 +1,165 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="TaskManager — список задач с автоматической классификацией по категории, приоритету и дедлайну." />
-    <title>TaskManager — задачи с авто-классификацией</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="TaskManager — умный список задач с автоматической классификацией по категории, приоритету и сроку." />
+    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#05070D" />
+    <title>TaskManager — умные задачи</title>
 
-    <!-- Шрифт Plus Jakarta Sans (Google Fonts) -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-
-    <!-- Свои стили -->
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-    <!-- ===================== ШАПКА ===================== -->
-    <header class="app-header">
-        <div class="container app-header__inner">
-            <span class="brand__mark" aria-hidden="true">
-                <svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M9 11l3 3L22 4"></path>
-                    <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
-                </svg>
-            </span>
+    <div class="bg" aria-hidden="true">
+        <span class="bg__glow bg__glow--violet"></span>
+        <span class="bg__glow bg__glow--cyan"></span>
+        <span class="bg__glow bg__glow--rose"></span>
+        <span class="bg__grain"></span>
+    </div>
+
+    <header class="topbar">
+        <div class="topbar__inner glass">
             <div class="brand">
-                <h1 class="brand__title">TaskManager</h1>
-                <p class="brand__subtitle">Категория, приоритет и дедлайн подставляются автоматически при создании задачи.</p>
+                <span class="brand__mark" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4" /><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" /></svg>
+                </span>
+                <div class="brand__text">
+                    <h1 class="brand__title">TaskManager</h1>
+                    <p class="brand__subtitle">Умный список задач с авто-классификацией</p>
+                </div>
             </div>
+            <span class="topbar__chip"><span class="pulse" aria-hidden="true"></span>AI ready</span>
         </div>
     </header>
 
-    <!-- ============== ОБЛАСТЬ УВЕДОМЛЕНИЙ ============== -->
-    <!-- role="status" + aria-live: скринридер озвучивает текст, появившийся тут -->
-    <div class="container">
-        <div id="notifications" class="notifications" role="status" aria-live="polite" aria-atomic="true"></div>
-    </div>
+    <main class="layout">
+        <div class="col col--aside">
+            <section class="panel glass" aria-labelledby="create-title">
+                <h2 id="create-title" class="panel__title">Новая задача</h2>
 
-    <main class="container app-main">
-        <!-- ===================== СОЗДАНИЕ ЗАДАЧИ ===================== -->
-        <section class="panel" aria-labelledby="create-title">
-            <h2 id="create-title" class="panel__title">Новая задача</h2>
-
-            <!-- novalidate: своя валидация с понятной ошибкой рядом с полем -->
-            <form id="task-form" class="task-form" novalidate>
-                <div class="field">
-                    <label class="field__label" for="task-text">Текст задачи</label>
-                    <textarea
-                        id="task-text"
-                        name="text"
-                        class="field__input"
-                        rows="2"
-                        required
-                        placeholder="Например: подготовить лабораторную к завтрашнему дню"
-                        aria-describedby="task-text-hint task-text-error"></textarea>
-                    <p id="task-text-hint" class="field__hint">
-                        Опишите задачу обычным текстом — категорию, приоритет и дедлайн система определит сама.
-                    </p>
-                    <!-- Инлайн-ошибка: рядом с полем и озвучивается (role="alert") -->
-                    <p id="task-text-error" class="field__error" role="alert" hidden></p>
-                </div>
-
-                <!-- Классификатор: выбор способа определения категории/приоритета -->
-                <div class="field">
-                    <span class="field__label" id="classifier-label">Классификатор</span>
-                    <div class="classifier" role="radiogroup" aria-labelledby="classifier-label">
-                        <label class="classifier__option">
-                            <input type="radio" name="classifier" value="AI" checked />
-                            <span>AI</span>
-                        </label>
-                        <label class="classifier__option">
-                            <input type="radio" name="classifier" value="KeyWord" />
-                            <span>По ключевым словам</span>
-                        </label>
+                <form id="task-form" class="form" novalidate>
+                    <div class="field">
+                        <label class="field__label" for="task-text">Опишите задачу</label>
+                        <textarea id="task-text" class="input" rows="3" required placeholder="Например: подготовить отчёт к пятнице" aria-describedby="task-hint task-error"></textarea>
+                        <p id="task-hint" class="field__hint">Категория, приоритет и срок определятся автоматически.</p>
+                        <p id="task-error" class="field__error" role="alert" hidden></p>
                     </div>
+
+                    <fieldset class="field field--segment">
+                        <legend class="field__label">Способ классификации</legend>
+                        <div class="segment">
+                            <span class="segment__thumb" aria-hidden="true"></span>
+                            <label class="segment__opt">
+                                <input type="radio" name="classifier" value="AI" checked />
+                                <span>AI</span>
+                            </label>
+                            <label class="segment__opt">
+                                <input type="radio" name="classifier" value="KeyWord" />
+                                <span>Ключевые слова</span>
+                            </label>
+                        </div>
+                    </fieldset>
+
+                    <button id="submit-btn" type="submit" class="btn btn--primary">
+                        <span class="btn__spinner" aria-hidden="true"></span>
+                        <span id="submit-label" class="btn__label">Добавить задачу</span>
+                    </button>
+                </form>
+            </section>
+
+            <section class="panel glass" aria-labelledby="filters-title">
+                <h2 id="filters-title" class="panel__title">Фильтры</h2>
+                <div class="filters">
+                    <div class="field">
+                        <label class="field__label" for="filter-category">Категория</label>
+                        <select id="filter-category" class="input select">
+                            <option value="">Все категории</option>
+                            <option value="Study">Учёба</option>
+                            <option value="Work">Работа</option>
+                            <option value="Shopping">Покупки</option>
+                            <option value="Personal">Личное</option>
+                            <option value="Other">Другое</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label class="field__label" for="filter-priority">Приоритет</label>
+                        <select id="filter-priority" class="input select">
+                            <option value="">Все приоритеты</option>
+                            <option value="High">Высокий</option>
+                            <option value="Medium">Средний</option>
+                            <option value="Low">Низкий</option>
+                        </select>
+                    </div>
+                    <button id="filters-reset" type="button" class="btn btn--ghost">Сбросить фильтры</button>
                 </div>
+            </section>
+        </div>
 
-                <button id="task-submit" class="btn btn--primary" type="submit">
-                    <span class="btn__spinner" aria-hidden="true"></span>
-                    <span id="task-submit-label" class="btn__label">Добавить задачу</span>
-                </button>
-            </form>
-        </section>
-
-        <!-- ===================== ФИЛЬТРЫ ===================== -->
-        <section class="panel" aria-labelledby="filters-title">
-            <h2 id="filters-title" class="panel__title">Фильтры</h2>
-            <div class="filters">
-                <div class="field">
-                    <label class="field__label" for="filter-category">Категория</label>
-                    <select id="filter-category" class="field__input field__select">
-                        <option value="">Все категории</option>
-                        <option value="Study">Учёба</option>
-                        <option value="Work">Работа</option>
-                        <option value="Shopping">Покупки</option>
-                        <option value="Personal">Личное</option>
-                        <option value="Other">Другое</option>
-                    </select>
-                </div>
-
-                <div class="field">
-                    <label class="field__label" for="filter-priority">Приоритет</label>
-                    <select id="filter-priority" class="field__input field__select">
-                        <option value="">Все приоритеты</option>
-                        <option value="High">Высокий</option>
-                        <option value="Medium">Средний</option>
-                        <option value="Low">Низкий</option>
-                    </select>
-                </div>
-
-                <button id="filters-reset" class="btn btn--ghost" type="button">Сбросить фильтры</button>
-            </div>
-        </section>
-
-        <!-- ===================== СПИСОК ЗАДАЧ ===================== -->
-        <section class="panel" aria-labelledby="tasks-title">
+        <section class="panel glass panel--tasks" aria-labelledby="tasks-title">
             <div class="panel__head">
                 <h2 id="tasks-title" class="panel__title">Задачи</h2>
-                <p id="tasks-count" class="tasks-count" aria-live="polite"></p>
+                <p id="tasks-count" class="count" aria-live="polite"></p>
             </div>
 
-            <!-- Состояние загрузки списка -->
-            <p id="tasks-loading" class="tasks-loading" role="status" hidden>Загружаем задачи…</p>
+            <p id="tasks-loading" class="loading" role="status" hidden><span class="loading__ring" aria-hidden="true"></span>Загружаем задачи…</p>
 
-            <!-- Список задач: семантически <ul>, элементы — <li> -->
-            <ul id="task-list" class="task-list"></ul>
+            <ul id="task-list" class="tasks"></ul>
 
-            <!-- Пустое состояние -->
-            <div id="empty-state" class="empty-state" hidden>
-                <p class="empty-state__title">Пока задач нет</p>
-                <p class="empty-state__text">Добавьте первую задачу в форме выше — она появится здесь.</p>
+            <div id="empty-state" class="empty" hidden>
+                <span class="empty__icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4" /><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" /></svg>
+                </span>
+                <p class="empty__title">Пока задач нет</p>
+                <p class="empty__text">Добавьте первую задачу — она появится здесь.</p>
             </div>
         </section>
     </main>
 
-    <!-- ===================== ПОДВАЛ ===================== -->
-    <footer class="app-footer">
-        <div class="container">
-            <p>TaskManager — учебный проект (C# / ASP.NET Core + обычный HTML/CSS/JS)</p>
+    <div id="toasts" class="toasts" role="status" aria-live="polite" aria-atomic="true"></div>
+
+    <div id="modal" class="modal" hidden>
+        <div class="modal__overlay"></div>
+        <div class="modal__dialog glass" role="dialog" aria-modal="true" aria-labelledby="modal-title" aria-describedby="modal-text">
+            <span class="modal__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4" /><path d="M12 17h.01" /><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" /></svg>
+            </span>
+            <h2 id="modal-title" class="modal__title">Удалить задачу?</h2>
+            <p id="modal-text" class="modal__text"></p>
+            <div class="modal__actions">
+                <button id="modal-cancel" type="button" class="btn btn--ghost">Отмена</button>
+                <button id="modal-confirm" type="button" class="btn btn--danger">Удалить</button>
+            </div>
         </div>
-    </footer>
+    </div>
 
-    <!-- ============ ШАБЛОН КАРТОЧКИ ЗАДАЧИ ============ -->
-    <!-- <template> хранит разметку, но не показывает её. JS клонирует её для каждой задачи -->
     <template id="task-card-template">
-        <li class="task-card" data-id="">
-            <article class="task-card__body">
-                <div class="task-card__top">
-                    <h3 class="task-card__text"></h3>
-                    <span class="task-card__status" data-status hidden></span>
+        <li class="task" data-id="">
+            <span class="task__sheen" aria-hidden="true"></span>
+            <article class="task__body">
+                <div class="task__main">
+                    <h3 class="task__title"></h3>
+                    <div class="task__chips">
+                        <span class="chip chip--cat" data-cat=""></span>
+                        <span class="chip chip--prio" data-prio=""></span>
+                        <time class="chip chip--date" data-date hidden></time>
+                    </div>
                 </div>
-
-                <div class="task-card__badges">
-                    <span class="badge badge--category" data-category=""></span>
-                    <span class="badge badge--priority" data-priority=""></span>
-                    <time class="badge badge--deadline" data-deadline hidden></time>
-                </div>
-
-                <div class="task-card__actions">
-                    <button class="btn btn--complete" type="button" data-action="complete">Завершить</button>
-                    <button class="btn btn--danger" type="button" data-action="delete">Удалить</button>
+                <div class="task__actions">
+                    <button type="button" class="icon-btn icon-btn--done" data-action="complete" aria-label="Завершить задачу">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5" /></svg>
+                    </button>
+                    <button type="button" class="icon-btn icon-btn--danger" data-action="delete" aria-label="Удалить задачу">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18" /><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" /></svg>
+                    </button>
                 </div>
             </article>
         </li>
     </template>
 
-    <!-- ============ МОДАЛЬНОЕ ОКНО ПОДТВЕРЖДЕНИЯ УДАЛЕНИЯ ============ -->
-    <!-- hidden по умолчанию; JS показывает окно и ждёт выбор пользователя -->
-    <div id="confirm-modal" class="modal" hidden>
-        <div class="modal__overlay"></div>
-        <div class="modal__dialog" role="dialog" aria-modal="true"
-             aria-labelledby="confirm-title" aria-describedby="confirm-text">
-            <h2 id="confirm-title" class="modal__title">Удаление задачи</h2>
-            <p id="confirm-text" class="modal__text"></p>
-            <div class="modal__actions">
-                <button id="confirm-cancel" type="button" class="btn btn--ghost">Отмена</button>
-                <button id="confirm-ok" type="button" class="btn btn--danger">Удалить</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Логика: defer — скрипт выполнится после построения DOM -->
     <script src="site.js" defer></script>
 </body>
 </html>

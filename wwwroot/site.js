@@ -1,149 +1,295 @@
 /* ==========================================================================
-   TaskManager — site.js
-   Логика страницы: загрузка, создание, фильтры, завершение, удаление задач.
-   Работает с API /api/tasks (см. Controllers/TasksController.cs)
+   TaskManager — site.js   (работает с API /api/Tasks)
    ========================================================================== */
 
-/* ---------- 1. КОНСТАНТЫ И ССЫЛКИ НА ЭЛЕМЕНТЫ ---------- */
+const API_URL = "/api/Tasks";
 
-const API_URL = '/api/tasks';
+const CATEGORY_LABELS = { Study: "Учёба", Work: "Работа", Shopping: "Покупки", Personal: "Личное", Other: "Другое" };
+const PRIORITY_LABELS = { Low: "Низкий", Medium: "Средний", High: "Высокий" };
 
-// Сервер отдаёт enum-ы строками (JsonStringEnumConverter) — переводим их на русский
-const CATEGORY_LABELS = {
-  Study: 'Учёба',
-  Work: 'Работа',
-  Shopping: 'Покупки',
-  Personal: 'Личное',
-  Other: 'Другое',
-};
-
-const PRIORITY_LABELS = {
-  Low: 'Низкий',
-  Medium: 'Средний',
-  High: 'Высокий',
-};
-
-// Один раз находим нужные элементы — дальше работаем через объект el
 const el = {
-  form: document.getElementById('task-form'),
-  text: document.getElementById('task-text'),
-  textError: document.getElementById('task-text-error'),
-  submit: document.getElementById('task-submit'),
-  notifications: document.getElementById('notifications'),
-  filterCategory: document.getElementById('filter-category'),
-  filterPriority: document.getElementById('filter-priority'),
-  filtersReset: document.getElementById('filters-reset'),
-  list: document.getElementById('task-list'),
-  count: document.getElementById('tasks-count'),
-  loading: document.getElementById('tasks-loading'),
-  empty: document.getElementById('empty-state'),
-  template: document.getElementById('task-card-template'),
-  classifier: document.querySelectorAll('input[name="classifier"]'),
-  submitLabel: document.getElementById('task-submit-label'),
-  confirmModal: document.getElementById('confirm-modal'),
-  confirmOverlay: document.querySelector('#confirm-modal .modal__overlay'),
-  confirmText: document.getElementById('confirm-text'),
-  confirmOk: document.getElementById('confirm-ok'),
-  confirmCancel: document.getElementById('confirm-cancel'),
+  form: document.getElementById("task-form"),
+  text: document.getElementById("task-text"),
+  textError: document.getElementById("task-error"),
+  submit: document.getElementById("submit-btn"),
+  submitLabel: document.getElementById("submit-label"),
+  filterCategory: document.getElementById("filter-category"),
+  filterPriority: document.getElementById("filter-priority"),
+  filtersReset: document.getElementById("filters-reset"),
+  list: document.getElementById("task-list"),
+  count: document.getElementById("tasks-count"),
+  loading: document.getElementById("tasks-loading"),
+  empty: document.getElementById("empty-state"),
+  template: document.getElementById("task-card-template"),
+  toasts: document.getElementById("toasts"),
+  modal: document.getElementById("modal"),
+  modalText: document.getElementById("modal-text"),
+  modalOk: document.getElementById("modal-confirm"),
+  modalCancel: document.getElementById("modal-cancel"),
+  modalOverlay: document.querySelector("#modal .modal__overlay"),
 };
 
-// «Состояние» приложения — единственный источник правды для отрисовки
 let tasks = [];
 
-/* ---------- 2. РАБОТА С API ---------- */
-
-// Обёртка над fetch: разбирает JSON и бросает понятные ошибки
+/* ---------- API ---------- */
 async function apiRequest(url, options = {}) {
   let response;
-
   try {
     response = await fetch(url, options);
   } catch {
-    throw new Error('Не удалось связаться с сервером. Запущен ли backend?');
+    throw new Error("Нет связи с сервером. Запущен ли backend?");
   }
-
-  if (!response.ok) {
-    throw new Error(`Сервер вернул ошибку ${response.status}`);
-  }
-
-  // DELETE отвечает 204 No Content — тела нет, парсить нечего
+  if (!response.ok) throw new Error(`Сервер вернул ошибку ${response.status}`);
   if (response.status === 204) return null;
-
   return response.json();
 }
 
-/* ---------- 3. УВЕДОМЛЕНИЯ ---------- */
-
-function showNotification(message, type = 'info') {
-  const note = document.createElement('div');
-  note.className = `notification notification--${type}`;
-  note.textContent = message;
-  el.notifications.appendChild(note);
-
-  // Через несколько секунд убираем, чтобы не копились
-  const lifetime = type === 'error' ? 6000 : 4000;
-  setTimeout(() => note.remove(), lifetime);
+function buildListUrl() {
+  const params = new URLSearchParams();
+  if (el.filterCategory.value) params.append("category", el.filterCategory.value);
+  if (el.filterPriority.value) params.append("priority", el.filterPriority.value);
+  const query = params.toString();
+  return query ? `${API_URL}?${query}` : API_URL;
 }
 
-/* ---------- 4. СОСТОЯНИЯ ФОРМЫ ---------- */
+/* ---------- ТОСТЫ ---------- */
+function toast(message, type = "info") {
+  const node = document.createElement("div");
+  node.className = `toast toast--${type}`;
+  const dot = document.createElement("span");
+  dot.className = "toast__dot";
+  dot.setAttribute("aria-hidden", "true");
+  const text = document.createElement("span");
+  text.className = "toast__text";
+  text.textContent = message;
+  node.append(dot, text);
+  el.toasts.appendChild(node);
 
+  const life = type === "error" ? 6000 : 4000;
+  setTimeout(() => {
+    node.classList.add("is-hiding");
+    setTimeout(() => node.remove(), 400);
+  }, life);
+}
+
+/* ---------- ФОРМА ---------- */
 function setFormLoading(isLoading) {
   el.submit.disabled = isLoading;
-  el.submit.classList.toggle('is-loading', isLoading);
-  el.submit.setAttribute('aria-busy', isLoading ? 'true' : 'false');
-  el.form.setAttribute('aria-busy', isLoading ? 'true' : 'false');
-  el.submitLabel.textContent = isLoading ? 'Классифицирую задачу…' : 'Добавить задачу';
+  el.submit.classList.toggle("is-loading", isLoading);
+  el.submit.setAttribute("aria-busy", String(isLoading));
+  el.form.setAttribute("aria-busy", String(isLoading));
+  el.submitLabel.textContent = isLoading ? "Классифицирую задачу…" : "Добавить задачу";
 }
 
-function showFieldError(message) {
+function showError(message) {
   el.textError.textContent = message;
   el.textError.hidden = false;
-  el.text.classList.add('is-invalid');
-  el.text.setAttribute('aria-invalid', 'true');
+  el.text.classList.add("is-invalid");
+  el.text.setAttribute("aria-invalid", "true");
 }
 
-function clearFieldError() {
-  el.textError.textContent = '';
+function clearError() {
+  el.textError.textContent = "";
   el.textError.hidden = true;
-  el.text.classList.remove('is-invalid');
-  el.text.removeAttribute('aria-invalid');
+  el.text.classList.remove("is-invalid");
+  el.text.removeAttribute("aria-invalid");
 }
 
-// Возвращает выбранный классификатор: 'AI' или 'KeyWord' (по умолчанию — 'AI')
-function getClassifierType() {
-  const checked = document.querySelector('input[name="classifier"]:checked');
-  return checked ? checked.value : 'AI';
+function selectedClassifier() {
+  const checked = document.querySelector("input[name=classifier]:checked");
+  return checked ? checked.value : "AI";
 }
 
-/* ---------- 4.1 МОДАЛЬНОЕ ПОДТВЕРЖДЕНИЕ УДАЛЕНИЯ ---------- */
+function setListLoading(isLoading) {
+  el.loading.hidden = !isLoading;
+}
 
-// «Резолвер» промиса — чтобы закрыть окно и вернуть ответ (true/false)
+/* ---------- ОТРИСОВКА ---------- */
+function tasksWord(n) {
+  const d = n % 10;
+  const h = n % 100;
+  if (d === 1 && h !== 11) return "задача";
+  if (d >= 2 && d <= 4 && (h < 12 || h > 14)) return "задачи";
+  return "задач";
+}
+
+function formatDeadline(iso) {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleDateString("ru-RU", { day: "2-digit", month: "short", year: "numeric" });
+}
+
+function createCard(task, index) {
+  const fragment = el.template.content.cloneNode(true);
+  const card = fragment.querySelector(".task");
+  const title = fragment.querySelector(".task__title");
+  const catChip = fragment.querySelector(".chip--cat");
+  const prioChip = fragment.querySelector(".chip--prio");
+  const dateChip = fragment.querySelector(".chip--date");
+
+  card.dataset.id = task.id;
+  card.style.animationDelay = `${Math.min(index, 12) * 55}ms`;
+  if (task.isCompleted) card.classList.add("is-done");
+
+  title.textContent = task.text;
+  catChip.textContent = CATEGORY_LABELS[task.category] || task.category;
+  prioChip.textContent = PRIORITY_LABELS[task.priority] || task.priority;
+  prioChip.dataset.prio = task.priority;
+
+  if (task.deadline) {
+    dateChip.hidden = false;
+    dateChip.dateTime = task.deadline;
+    dateChip.textContent = `Срок: ${formatDeadline(task.deadline)}`;
+  }
+
+  fragment.querySelector("[data-action=complete]").addEventListener("click", () => toggleTask(task.id));
+  fragment.querySelector("[data-action=delete]").addEventListener("click", () => deleteTask(task.id));
+  return fragment;
+}
+
+function render() {
+  el.list.innerHTML = "";
+  // Выполненные задачи уходят вниз (порядок внутри каждой группы сохраняется)
+  const ordered = [...tasks].sort((a, b) => Number(a.isCompleted) - Number(b.isCompleted));
+  ordered.forEach((task, index) => el.list.appendChild(createCard(task, index)));
+
+  el.count.textContent = tasks.length ? `${tasks.length} ${tasksWord(tasks.length)}` : "";
+
+  const isEmpty = tasks.length === 0;
+  el.empty.hidden = !isEmpty;
+  if (isEmpty) {
+    const filtered = Boolean(el.filterCategory.value || el.filterPriority.value);
+    const title = el.empty.querySelector(".empty__title");
+    const text = el.empty.querySelector(".empty__text");
+    title.textContent = filtered ? "Ничего не найдено" : "Пока задач нет";
+    text.textContent = filtered
+      ? "Под выбранные фильтры задач нет. Попробуйте сбросить фильтры."
+      : "Добавьте первую задачу — она появится здесь.";
+  }
+}
+
+function setCardBusy(id, busy) {
+  const card = el.list.querySelector(`.task[data-id="${id}"]`);
+  if (!card) return;
+  card.querySelectorAll("button").forEach((btn) => { btn.disabled = busy; });
+}
+
+/* ---------- ЗАГРУЗКА ---------- */
+async function loadTasks() {
+  setListLoading(true);
+  try {
+    tasks = await apiRequest(buildListUrl());
+  } catch (error) {
+    setListLoading(false);
+    toast(error.message, "error");
+    el.empty.hidden = false;
+    el.empty.querySelector(".empty__title").textContent = "Не удалось загрузить задачи";
+    el.empty.querySelector(".empty__text").textContent = "Проверьте, что сервер запущен, и обновите страницу.";
+    return;
+  }
+  setListLoading(false);
+  render();
+}
+
+/* ---------- ДЕЙСТВИЯ ---------- */
+async function createTask(event) {
+  event.preventDefault();
+  clearError();
+
+  const text = el.text.value.trim();
+  if (!text) {
+    showError("Введите текст задачи.");
+    el.text.focus();
+    return;
+  }
+
+  setFormLoading(true);
+  const classifierType = selectedClassifier();
+
+  try {
+    const created = await apiRequest(API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text: text, classifierType: classifierType }),
+    });
+    el.text.value = "";
+    tasks.unshift(created);
+    render();
+    toast(`Задача добавлена (${classifierType}).`, "success");
+  } catch (error) {
+    toast(error.message, "error");
+  } finally {
+    setFormLoading(false);
+  }
+}
+
+async function toggleTask(id) {
+  const task = tasks.find((t) => t.id === id);
+  if (!task) return;
+
+  setCardBusy(id, true);
+  try {
+    // PUT заменяет задачу целиком — берём актуальную версию с сервера и меняем статус
+    const fresh = await apiRequest(`${API_URL}/${id}`);
+    fresh.isCompleted = !fresh.isCompleted;
+
+    const updated = await apiRequest(`${API_URL}/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(fresh),
+    });
+
+    tasks = tasks.map((t) => (t.id === id ? updated : t));
+    render();
+    toast(updated.isCompleted ? "Задача выполнена." : "Задача возвращена в работу.", "success");
+  } catch (error) {
+    toast(error.message, "error");
+    setCardBusy(id, false);
+  }
+}
+
+async function deleteTask(id) {
+  const task = tasks.find((t) => t.id === id);
+  if (!task) return;
+
+  const confirmed = await openConfirm(`Задача «${task.text}» будет удалена безвозвратно.`);
+  if (!confirmed) return;
+
+  setCardBusy(id, true);
+  try {
+    await apiRequest(`${API_URL}/${id}`, { method: "DELETE" });
+    tasks = tasks.filter((t) => t.id !== id);
+    render();
+    toast("Задача удалена.", "success");
+  } catch (error) {
+    toast(error.message, "error");
+    setCardBusy(id, false);
+  }
+}
+
+
+/* ---------- МОДАЛЬНОЕ ОКНО ПОДТВЕРЖДЕНИЯ ---------- */
 let modalResolve = null;
 let lastFocused = null;
 
-// Открывает окно и возвращает промис: true — подтверждено, false — отменено
 function openConfirm(message) {
-  el.confirmText.textContent = message;
-  el.confirmModal.hidden = false;
-  document.body.classList.add('is-modal-open');
+  el.modalText.textContent = message;
+  el.modal.hidden = false;
+  document.body.classList.add("is-locked");
 
-  // Запоминаем, где был фокус, и переносим его на безопасную кнопку «Отмена»
   lastFocused = document.activeElement;
-  el.confirmCancel.focus();
+  el.modalCancel.focus();
 
-  return new Promise((resolve) => {
-    modalResolve = resolve;
-  });
+  return new Promise((resolve) => { modalResolve = resolve; });
 }
 
 function closeConfirm(result) {
-  if (el.confirmModal.hidden) return;
+  if (el.modal.hidden) return;
 
-  el.confirmModal.hidden = true;
-  document.body.classList.remove('is-modal-open');
+  el.modal.hidden = true;
+  document.body.classList.remove("is-locked");
 
-  // Возвращаем фокус туда, откуда окно открыли
-  if (lastFocused && typeof lastFocused.focus === 'function') lastFocused.focus();
+  if (lastFocused && typeof lastFocused.focus === "function") lastFocused.focus();
   lastFocused = null;
 
   const resolve = modalResolve;
@@ -151,278 +297,45 @@ function closeConfirm(result) {
   if (resolve) resolve(result);
 }
 
-/* ---------- 5. ОТРИСОВКА СПИСКА ---------- */
+/* ---------- ИНИЦИАЛИЗАЦИЯ ---------- */
+el.form.addEventListener("submit", createTask);
 
-// Правильная форма слова: 1 задача / 2 задачи / 5 задач
-function tasksWord(n) {
-  const mod10 = n % 10;
-  const mod100 = n % 100;
-  if (mod10 === 1 && mod100 !== 11) return 'задача';
-  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return 'задачи';
-  return 'задач';
-}
-
-function formatDeadline(iso) {
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return '';
-  return date.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' });
-}
-
-// Клонируем <template> и заполняем его данными одной задачи
-function createCard(task) {
-  const fragment = el.template.content.cloneNode(true);
-
-  const card = fragment.querySelector('.task-card');
-  const textEl = fragment.querySelector('.task-card__text');
-  const statusEl = fragment.querySelector('.task-card__status');
-  const categoryBadge = fragment.querySelector('.badge--category');
-  const priorityBadge = fragment.querySelector('.badge--priority');
-  const deadlineBadge = fragment.querySelector('.badge--deadline');
-
-  card.dataset.id = task.id;
-  if (task.isCompleted) card.classList.add('is-completed');
-
-  // textContent (а не innerHTML) — текст задачи не может «внедрить» HTML
-  textEl.textContent = task.text;
-
-  categoryBadge.textContent = CATEGORY_LABELS[task.category] || task.category;
-
-  priorityBadge.textContent = PRIORITY_LABELS[task.priority] || task.priority;
-  priorityBadge.dataset.priority = task.priority; // по этому атрибуту работает цвет в CSS
-
-  if (task.deadline) {
-    deadlineBadge.hidden = false;
-    deadlineBadge.dateTime = task.deadline;
-    deadlineBadge.textContent = `Дедлайн: ${formatDeadline(task.deadline)}`;
-  }
-
-  if (task.isCompleted) {
-    statusEl.hidden = false;
-    statusEl.textContent = 'Выполнено';
-  }
-
-  // Замыкание: каждая кнопка «помнит» id своей задачи
-  fragment.querySelector('.btn--complete').addEventListener('click', () => completeTask(task.id));
-  fragment.querySelector('.btn--danger').addEventListener('click', () => deleteTask(task.id));
-
-  return fragment;
-}
-
-// Применяем фильтры к полному списку задач
-function getVisibleTasks() {
-  const category = el.filterCategory.value;
-  const priority = el.filterPriority.value;
-
-  return tasks
-    .filter((task) => !category || task.category === category)
-    .filter((task) => !priority || task.priority === priority)
-    // сначала незавершённые, внутри группы — новые сверху
-    .sort((a, b) => Number(a.isCompleted) - Number(b.isCompleted) || b.id - a.id);
-}
-
-function setEmptyState(mode) {
-  const title = el.empty.querySelector('.empty-state__title');
-  const body = el.empty.querySelector('.empty-state__text');
-
-  if (mode === 'error') {
-    title.textContent = 'Не удалось загрузить задачи';
-    body.textContent = 'Проверьте, что сервер запущен, и обновите страницу.';
-  } else if (mode === 'no-matches') {
-    title.textContent = 'Ничего не найдено';
-    body.textContent = 'По выбранным фильтрам задач нет. Попробуйте сбросить фильтры.';
-  } else {
-    title.textContent = 'Пока задач нет';
-    body.textContent = 'Добавьте первую задачу в форме выше — она появится здесь.';
-  }
-}
-
-function render() {
-  const visible = getVisibleTasks();
-
-  el.list.innerHTML = '';
-  for (const task of visible) {
-    el.list.appendChild(createCard(task));
-  }
-
-  // Счётчик задач
-  const total = tasks.length;
-  if (total === 0) {
-    el.count.textContent = '';
-  } else if (visible.length === total) {
-    el.count.textContent = `${total} ${tasksWord(total)}`;
-  } else {
-    el.count.textContent = `Показано ${visible.length} из ${total}`;
-  }
-
-  // Пустое состояние
-  const isEmpty = visible.length === 0;
-  el.empty.hidden = !isEmpty;
-  if (isEmpty) {
-    const filtered = Boolean(el.filterCategory.value || el.filterPriority.value);
-    setEmptyState(filtered ? 'no-matches' : 'no-tasks');
-  }
-}
-
-function setListLoading(isLoading) {
-  el.loading.hidden = !isLoading;
-}
-
-// Блокируем кнопки конкретной карточки, пока идёт запрос
-function setCardBusy(id, isBusy) {
-  const card = el.list.querySelector(`.task-card[data-id='${id}']`);
-  if (!card) return;
-  card.querySelectorAll('button').forEach((btn) => { btn.disabled = isBusy; });
-}
-
-/* ---------- 6. ДЕЙСТВИЯ (запросы к API) ---------- */
-
-// GET /api/tasks — загрузка при открытии страницы
-async function loadTasks() {
-  setListLoading(true);
-
-  try {
-    tasks = await apiRequest(API_URL);
-  } catch (error) {
-    setListLoading(false);
-    showNotification(error.message, 'error');
-    el.empty.hidden = false;
-    setEmptyState('error');
-    return;
-  }
-
-  setListLoading(false);
-  render();
-}
-
-// POST /api/tasks — создание задачи
-async function createTask(event) {
-  event.preventDefault();
-  clearFieldError();
-
-  const text = el.text.value.trim();
-  if (!text) {
-    showFieldError('Введите текст задачи.');
-    el.text.focus();
-    return;
-  }
-
-  setFormLoading(true);
-
-  try {
-    // Отправляем текст и выбранный классификатор.
-    // Сервер сам определит категорию, приоритет и дедлайн (TaskService -> TaskClassifierFactory).
-    const classifierType = getClassifierType();
-    const created = await apiRequest(API_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text: text, classifierType: classifierType }),
-    });
-
-    tasks.push(created);
-    el.text.value = '';
-    render();
-    showNotification(`Задача добавлена (${classifierType}).`, 'success');
-  } catch (error) {
-    showNotification(error.message, 'error');
-  } finally {
-    setFormLoading(false);
-  }
-}
-
-// PUT /api/tasks/{id} — отметить задачу выполненной
-async function completeTask(id) {
-  const task = tasks.find((t) => t.id === id);
-  if (!task) return;
-
-  setCardBusy(id, true);
-
-  try {
-    // ВАЖНО: PUT заменяет задачу целиком, поэтому отправляем ВСЕ поля.
-    // Если отправить только isCompleted, сервер обнулит категорию и приоритет.
-    const updated = await apiRequest(`${API_URL}/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        text: task.text,
-        category: task.category,
-        priority: task.priority,
-        deadline: task.deadline,
-        isCompleted: true,
-      }),
-    });
-
-    tasks = tasks.map((t) => (t.id === id ? updated : t));
-    render();
-    showNotification('Задача завершена.', 'success');
-  } catch (error) {
-    showNotification(error.message, 'error');
-    setCardBusy(id, false);
-  }
-}
-
-// DELETE /api/tasks/{id} — удаление задачи
-async function deleteTask(id) {
-  const task = tasks.find((t) => t.id === id);
-  if (!task) return;
-
-  // Своё модальное окно вместо браузерного confirm()
-  const confirmed = await openConfirm(`Удалить задачу «${task.text}»?`);
-  if (!confirmed) return;
-
-  setCardBusy(id, true);
-
-  try {
-    await apiRequest(`${API_URL}/${id}`, { method: 'DELETE' });
-    tasks = tasks.filter((t) => t.id !== id);
-    render();
-    showNotification('Задача удалена.', 'success');
-  } catch (error) {
-    showNotification(error.message, 'error');
-    setCardBusy(id, false);
-  }
-}
-
-/* ---------- 7. ИНИЦИАЛИЗАЦИЯ ---------- */
-
-el.form.addEventListener('submit', createTask);
-
-// Ошибку под полем убираем, как только пользователь начал печатать
-el.text.addEventListener('input', clearFieldError);
-
-// Enter в поле — отправить форму; Shift+Enter — перенос строки
-el.text.addEventListener('keydown', (event) => {
-  if (event.key === 'Enter' && !event.shiftKey) {
+// Enter — отправить задачу, Shift+Enter — перенос строки
+el.text.addEventListener("keydown", (event) => {
+  if (event.key === "Enter" && !event.shiftKey) {
     event.preventDefault();
     el.form.requestSubmit();
   }
 });
 
-// Фильтры применяются мгновенно, без запросов к серверу
-el.filterCategory.addEventListener('change', render);
-el.filterPriority.addEventListener('change', render);
-el.filtersReset.addEventListener('click', () => {
-  el.filterCategory.value = '';
-  el.filterPriority.value = '';
-  render();
+el.text.addEventListener("input", clearError);
+
+// Фильтры применяются на сервере (GET /api/Tasks?category=&priority=)
+el.filterCategory.addEventListener("change", loadTasks);
+el.filterPriority.addEventListener("change", loadTasks);
+el.filtersReset.addEventListener("click", () => {
+  el.filterCategory.value = "";
+  el.filterPriority.value = "";
+  loadTasks();
 });
 
-// Модальное окно: «Отмена», «Удалить», клик по затемнению и Esc
-el.confirmCancel.addEventListener('click', () => closeConfirm(false));
-el.confirmOk.addEventListener('click', () => closeConfirm(true));
-el.confirmOverlay.addEventListener('click', () => closeConfirm(false));
+// Модальное окно: кнопки, клик по затемнению и Esc
+el.modalCancel.addEventListener("click", () => closeConfirm(false));
+el.modalOk.addEventListener("click", () => closeConfirm(true));
+el.modalOverlay.addEventListener("click", () => closeConfirm(false));
 
-document.addEventListener('keydown', (event) => {
-  if (el.confirmModal.hidden) return;
+document.addEventListener("keydown", (event) => {
+  if (el.modal.hidden) return;
 
-  if (event.key === 'Escape') {
+  if (event.key === "Escape") {
     event.preventDefault();
     closeConfirm(false);
     return;
   }
 
-  // Простой «фокус-трап»: Tab не выходит за пределы окна
-  if (event.key === 'Tab') {
-    const buttons = el.confirmModal.querySelectorAll('button');
+  // Простой фокус-трап: Tab не выходит за пределы окна
+  if (event.key === "Tab") {
+    const buttons = el.modal.querySelectorAll("button");
     const first = buttons[0];
     const last = buttons[buttons.length - 1];
 
@@ -436,5 +349,6 @@ document.addEventListener('keydown', (event) => {
   }
 });
 
-// Первая загрузка списка
+// Первая загрузка
 loadTasks();
+
