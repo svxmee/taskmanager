@@ -17,7 +17,6 @@ C:\Users\matve\OneDrive\Рабочий стол\работа\ДДС Урал п�
 C:\Users\matve\OneDrive\Рабочий стол\работа\ДДС Урал практика\TaskManager\obj\Debug\net10.0\TaskManager.csproj.CoreCompileInputs.cache
 C:\Users\matve\OneDrive\Рабочий стол\работа\ДДС Урал практика\TaskManager\obj\Debug\net10.0\TaskManager.MvcApplicationPartsAssemblyInfo.cs
 C:\Users\matve\OneDrive\Рабочий стол\работа\ДДС Урал практика\TaskManager\obj\Debug\net10.0\TaskManager.MvcApplicationPartsAssemblyInfo.cache
-C:\Users\matve\OneDrive\Рабочий стол\работа\ДДС Урал практика\TaskManager\obj\Debug\net10.0\TaskManager.sourcelink.json
 C:\Users\matve\OneDrive\Рабочий стол\работа\ДДС Урал практика\TaskManager\obj\Debug\net10.0\rjimswa.dswa.cache.json
 C:\Users\matve\OneDrive\Рабочий стол\работа\ДДС Урал практика\TaskManager\obj\Debug\net10.0\rjsmrazor.dswa.cache.json
 C:\Users\matve\OneDrive\Рабочий стол\работа\ДДС Урал практика\TaskManager\obj\Debug\net10.0\rjsmcshtml.dswa.cache.json
@@ -195,6 +194,6 @@ C:\Users\matve\OneDrive\Рабочий стол\работа\ДДС Урал п�
 C:\Users\matve\OneDrive\Рабочий стол\работа\ДДС Урал практика\TaskManager\bin\Debug\net10.0\DotNetEnv.dll
 C:\Users\matve\OneDrive\Рабочий стол\работа\ДДС Урал практика\TaskManager\bin\Debug\net10.0\OpenAI.dll
 C:\Users\matve\OneDrive\Рабочий стол\работа\ДДС Урал практика\TaskManager\bin\Debug\net10.0\Superpower.dll
-C:\Users\matve\OneDrive\Рабочий стол\работа\ДДС Урал практика\TaskManager\obj\Debug\net10.0\compressed\hm94sqjw05-{0}-8arh5gd30z-8arh5gd30z.gz
-C:\Users\matve\OneDrive\Рабочий стол\работа\ДДС Урал практика\TaskManager\obj\Debug\net10.0\compressed\uwrxta5w6u-{0}-3yrx7hsyxg-3yrx7hsyxg.gz
-C:\Users\matve\OneDrive\Рабочий стол\работа\ДДС Урал практика\TaskManager\obj\Debug\net10.0\compressed\jotjp8g1ld-{0}-wabgjg9j1z-wabgjg9j1z.gz
+C:\Users\matve\OneDrive\Рабочий стол\работа\ДДС Урал практика\TaskManager\obj\Debug\net10.0\compressed\hm94sqjw05-{0}-saxzrj2gsb-saxzrj2gsb.gz
+C:\Users\matve\OneDrive\Рабочий стол\работа\ДДС Урал практика\TaskManager\obj\Debug\net10.0\compressed\jotjp8g1ld-{0}-0giflm53oo-0giflm53oo.gz
+C:\Users\matve\OneDrive\Рабочий стол\работа\ДДС Урал практика\TaskManager\obj\Debug\net10.0\compressed\uwrxta5w6u-{0}-za41szx4yz-za41szx4yz.gz

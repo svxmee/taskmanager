@@ -147,6 +147,32 @@ textarea.field__input { resize: vertical; min-height: 76px; }
   background-position: right 12px center;
 }
 
+/* ---------- КЛАССИФИКАТОР (radio в стиле «кнопок») ---------- */
+.classifier { display: flex; flex-wrap: wrap; gap: var(--space-3); }
+
+.classifier__option {
+  display: inline-flex; align-items: center; gap: var(--space-2);
+  min-height: 44px; padding: 0 var(--space-4);
+  border: 1px solid var(--color-border); border-radius: var(--radius);
+  background: var(--color-surface);
+  font-size: .9375rem; font-weight: 600;
+  cursor: pointer;
+  transition: border-color .15s ease, background-color .15s ease, color .15s ease;
+}
+.classifier__option:hover { border-color: var(--teal-200); background: var(--teal-50); }
+
+.classifier__option input[type="radio"] {
+  width: 18px; height: 18px; margin: 0; flex: 0 0 auto;
+  accent-color: var(--color-primary); cursor: pointer;
+}
+
+/* Выбранный вариант (прогрессивное улучшение, если браузер поддерживает :has) */
+.classifier__option:has(input:checked) {
+  border-color: var(--color-primary);
+  background: var(--teal-50);
+  color: var(--teal-800);
+}
+
 .task-form .btn { align-self: stretch; }
 
 /* ---------- ФИЛЬТРЫ ---------- */
@@ -241,6 +267,46 @@ textarea.field__input { resize: vertical; min-height: 76px; }
   content: ""; width: 14px; height: 14px;
   border: 2px solid var(--teal-200); border-top-color: var(--teal-600);
   border-radius: 50%; animation: spin .7s linear infinite;
+}
+
+/* ---------- МОДАЛЬНОЕ ОКНО ПОДТВЕРЖДЕНИЯ ---------- */
+body.is-modal-open { overflow: hidden; }
+
+.modal {
+  position: fixed; inset: 0; z-index: 50;
+  display: grid; place-items: center;
+  padding: var(--space-4);
+}
+.modal__overlay {
+  position: absolute; inset: 0;
+  background: rgba(15, 23, 42, .5);
+  animation: fade-in .2s ease;
+}
+.modal__dialog {
+  position: relative; z-index: 1;
+  width: 100%; max-width: 420px;
+  padding: var(--space-5);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow);
+  animation: modal-in .2s ease;
+}
+.modal__title { font-size: 1.125rem; font-weight: 700; }
+.modal__text {
+  margin-top: var(--space-2);
+  font-size: .9375rem; color: var(--color-fg-soft);
+  overflow-wrap: anywhere;
+}
+.modal__actions {
+  display: flex; flex-wrap: wrap; justify-content: flex-end;
+  gap: var(--space-2); margin-top: var(--space-5);
+}
+
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes modal-in {
+  from { opacity: 0; transform: translateY(8px) scale(.98); }
+  to   { opacity: 1; transform: none; }
 }
 
 /* ---------- 5. АДАПТИВНОСТЬ (mobile-first) ---------- */

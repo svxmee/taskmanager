@@ -25,6 +25,7 @@ public class AiTaskClassifier : ITaskClassifier
             options: options);
             
         var currentDateTime = DateTimeOffset.Now.ToString("O");
+        var currentDayOfWeek = DateTimeOffset.Now.ToString("dddd", new System.Globalization.CultureInfo("ru-RU"));
         List<ChatMessage> messages = [
             new SystemChatMessage(
                 "Ты классификатор задач. Для каждой задачи определи категорию, приоритет и дедлайн.\n" +
@@ -32,9 +33,13 @@ public class AiTaskClassifier : ITaskClassifier
                 "Если ни одна из категорий не подходит, ставь категорию Other.\n" +
                 "Приоритеты: Low, Medium, High.\n" +
                 $"Текущая дата и время: {currentDateTime}.\n" +
+                $"Сегодня день недели: {currentDayOfWeek}.\n" +
                 "Используй это время для определения относительных дедлайнов по типу: сегодня, завтра, послезавтра, через n дней и т.д.\n" +
                 "Дедлайн может быть не всегда. Если его нет, ничего не указывай на его месте.\n" +
                 "Дедлайн должен быть отдан в формате ДД.ММ.ГГГГ и ничего больше \n" + 
+                "При определении сложных календарных дат сначала точно вычисляй дату по календарю, а не приблизительно.\n" +
+                "Например, если указано \"второй четверг следующего месяца\", определи все четверги следующего месяца и выбери именно второй.\n" +
+                "Также правильно обрабатывай похожие выражения: первый понедельник, третий вторник и т.д.\n" +
                 "Формат ответа: Category, Priority, Deadline"
             ),
             new UserChatMessage(text)

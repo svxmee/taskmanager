@@ -61,9 +61,24 @@
                     <p id="task-text-error" class="field__error" role="alert" hidden></p>
                 </div>
 
+                <!-- Классификатор: выбор способа определения категории/приоритета -->
+                <div class="field">
+                    <span class="field__label" id="classifier-label">Классификатор</span>
+                    <div class="classifier" role="radiogroup" aria-labelledby="classifier-label">
+                        <label class="classifier__option">
+                            <input type="radio" name="classifier" value="AI" checked />
+                            <span>AI</span>
+                        </label>
+                        <label class="classifier__option">
+                            <input type="radio" name="classifier" value="KeyWord" />
+                            <span>По ключевым словам</span>
+                        </label>
+                    </div>
+                </div>
+
                 <button id="task-submit" class="btn btn--primary" type="submit">
                     <span class="btn__spinner" aria-hidden="true"></span>
-                    <span class="btn__label">Добавить задачу</span>
+                    <span id="task-submit-label" class="btn__label">Добавить задачу</span>
                 </button>
             </form>
         </section>
@@ -149,6 +164,21 @@
             </article>
         </li>
     </template>
+
+    <!-- ============ МОДАЛЬНОЕ ОКНО ПОДТВЕРЖДЕНИЯ УДАЛЕНИЯ ============ -->
+    <!-- hidden по умолчанию; JS показывает окно и ждёт выбор пользователя -->
+    <div id="confirm-modal" class="modal" hidden>
+        <div class="modal__overlay"></div>
+        <div class="modal__dialog" role="dialog" aria-modal="true"
+             aria-labelledby="confirm-title" aria-describedby="confirm-text">
+            <h2 id="confirm-title" class="modal__title">Удаление задачи</h2>
+            <p id="confirm-text" class="modal__text"></p>
+            <div class="modal__actions">
+                <button id="confirm-cancel" type="button" class="btn btn--ghost">Отмена</button>
+                <button id="confirm-ok" type="button" class="btn btn--danger">Удалить</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Логика: defer — скрипт выполнится после построения DOM -->
     <script src="site.js" defer></script>

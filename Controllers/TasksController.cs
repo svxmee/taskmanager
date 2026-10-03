@@ -10,6 +10,7 @@ namespace TaskManager.Controllers;
 
 public class TasksController : ControllerBase
 {
+
     private readonly ITaskService _taskService;
 
     public TasksController(ITaskService taskService)
@@ -17,9 +18,20 @@ public class TasksController : ControllerBase
         _taskService = taskService;
     }
     [HttpPost]
-    public IActionResult CreateTask(TaskItem task)
-    {
-        var createdTask = _taskService.CreateTask(task);
+    public IActionResult CreateTask(CreateTaskRequest request)
+    {  
+        if (string.IsNullOrWhiteSpace(request.Text))
+        {
+            return BadRequest(new
+            {
+                error = "Текст задачи не может быть пустым"
+            });
+        }
+        var task = new TaskItem
+        {
+            Text = request.Text
+        };
+        var createdTask = _taskService.CreateTask(task, request.ClassifierType);
         return Ok(createdTask);
     }
     
@@ -37,7 +49,10 @@ public class TasksController : ControllerBase
 
         if (task == null)
         {
-            return NotFound();
+            return NotFound(new
+            {
+                error = "Задача не найдена"
+            });
         }
         return Ok(task);
     }
@@ -62,7 +77,10 @@ public class TasksController : ControllerBase
 
         if (!deleted)
         {
-            return NotFound();
+            return NotFound(new
+            {
+                error = "Задача не найдена"
+            });
         }
 
         return NoContent();

@@ -38,6 +38,13 @@ const el = {
   loading: document.getElementById('tasks-loading'),
   empty: document.getElementById('empty-state'),
   template: document.getElementById('task-card-template'),
+  classifier: document.querySelectorAll('input[name="classifier"]'),
+  submitLabel: document.getElementById('task-submit-label'),
+  confirmModal: document.getElementById('confirm-modal'),
+  confirmOverlay: document.querySelector('#confirm-modal .modal__overlay'),
+  confirmText: document.getElementById('confirm-text'),
+  confirmOk: document.getElementById('confirm-ok'),
+  confirmCancel: document.getElementById('confirm-cancel'),
 };
 
 // «Состояние» приложения — единственный источник правды для отрисовки
@@ -83,6 +90,9 @@ function showNotification(message, type = 'info') {
 function setFormLoading(isLoading) {
   el.submit.disabled = isLoading;
   el.submit.classList.toggle('is-loading', isLoading);
+  el.submit.setAttribute('aria-busy', isLoading ? 'true' : 'false');
+  el.form.setAttribute('aria-busy', isLoading ? 'true' : 'false');
+  el.submitLabel.textContent = isLoading ? 'Классифицирую задачу…' : 'Добавить задачу';
 }
 
 function showFieldError(message) {
@@ -97,6 +107,48 @@ function clearFieldError() {
   el.textError.hidden = true;
   el.text.classList.remove('is-invalid');
   el.text.removeAttribute('aria-invalid');
+}
+
+// Возвращает выбранный классификатор: 'AI' или 'KeyWord' (по умолчанию — 'AI')
+function getClassifierType() {
+  const checked = document.querySelector('input[name="classifier"]:checked');
+  return checked ? checked.value : 'AI';
+}
+
+/* ---------- 4.1 МОДАЛЬНОЕ ПОДТВЕРЖДЕНИЕ УДАЛЕНИЯ ---------- */
+
+// «Резолвер» промиса — чтобы закрыть окно и вернуть ответ (true/false)
+let modalResolve = null;
+let lastFocused = null;
+
+// Открывает окно и возвращает промис: true — подтверждено, false — отменено
+function openConfirm(message) {
+  el.confirmText.textContent = message;
+  el.confirmModal.hidden = false;
+  document.body.classList.add('is-modal-open');
+
+  // Запоминаем, где был фокус, и переносим его на безопасную кнопку «Отмена»
+  lastFocused = document.activeElement;
+  el.confirmCancel.focus();
+
+  return new Promise((resolve) => {
+    modalResolve = resolve;
+  });
+}
+
+function closeConfirm(result) {
+  if (el.confirmModal.hidden) return;
+
+  el.confirmModal.hidden = true;
+  document.body.classList.remove('is-modal-open');
+
+  // Возвращаем фокус туда, откуда окно открыли
+  if (lastFocused && typeof lastFocused.focus === 'function') lastFocused.focus();
+  lastFocused = null;
+
+  const resolve = modalResolve;
+  modalResolve = null;
+  if (resolve) resolve(result);
 }
 
 /* ---------- 5. ОТРИСОВКА СПИСКА ---------- */
@@ -257,18 +309,19 @@ async function createTask(event) {
   setFormLoading(true);
 
   try {
-    // Отправляем только текст: категорию, приоритет и дедлайн
-    // сервер определит сам (TaskService.CreateTask -> AiTaskClassifier)
+    // Отправляем текст и выбранный классификатор.
+    // Сервер сам определит категорию, приоритет и дедлайн (TaskService -> TaskClassifierFactory).
+    const classifierType = getClassifierType();
     const created = await apiRequest(API_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text: text }),
+      body: JSON.stringify({ text: text, classifierType: classifierType }),
     });
 
     tasks.push(created);
     el.text.value = '';
     render();
-    showNotification('Задача добавлена.', 'success');
+    showNotification(`Задача добавлена (${classifierType}).`, 'success');
   } catch (error) {
     showNotification(error.message, 'error');
   } finally {
@@ -312,7 +365,9 @@ async function deleteTask(id) {
   const task = tasks.find((t) => t.id === id);
   if (!task) return;
 
-  if (!confirm(`Удалить задачу «${task.text}»?`)) return;
+  // Своё модальное окно вместо браузерного confirm()
+  const confirmed = await openConfirm(`Удалить задачу «${task.text}»?`);
+  if (!confirmed) return;
 
   setCardBusy(id, true);
 
@@ -334,6 +389,14 @@ el.form.addEventListener('submit', createTask);
 // Ошибку под полем убираем, как только пользователь начал печатать
 el.text.addEventListener('input', clearFieldError);
 
+// Enter в поле — отправить форму; Shift+Enter — перенос строки
+el.text.addEventListener('keydown', (event) => {
+  if (event.key === 'Enter' && !event.shiftKey) {
+    event.preventDefault();
+    el.form.requestSubmit();
+  }
+});
+
 // Фильтры применяются мгновенно, без запросов к серверу
 el.filterCategory.addEventListener('change', render);
 el.filterPriority.addEventListener('change', render);
@@ -341,6 +404,36 @@ el.filtersReset.addEventListener('click', () => {
   el.filterCategory.value = '';
   el.filterPriority.value = '';
   render();
+});
+
+// Модальное окно: «Отмена», «Удалить», клик по затемнению и Esc
+el.confirmCancel.addEventListener('click', () => closeConfirm(false));
+el.confirmOk.addEventListener('click', () => closeConfirm(true));
+el.confirmOverlay.addEventListener('click', () => closeConfirm(false));
+
+document.addEventListener('keydown', (event) => {
+  if (el.confirmModal.hidden) return;
+
+  if (event.key === 'Escape') {
+    event.preventDefault();
+    closeConfirm(false);
+    return;
+  }
+
+  // Простой «фокус-трап»: Tab не выходит за пределы окна
+  if (event.key === 'Tab') {
+    const buttons = el.confirmModal.querySelectorAll('button');
+    const first = buttons[0];
+    const last = buttons[buttons.length - 1];
+
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  }
 });
 
 // Первая загрузка списка

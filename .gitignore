@@ -1,0 +1,22 @@
+# Visual Studio / Rider
+.vs/
+.idea/
+
+# Build
+bin/
+obj/
+
+# User files
+*.user
+*.suo
+
+# Environment variables
+.env
+
+# SQLite temporary files
+*.db-shm
+*.db-wal
+
+# OS
+Thumbs.db
+.DS_Store
