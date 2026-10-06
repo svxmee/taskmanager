@@ -7,8 +7,8 @@ namespace TaskManager.Services;
 public class TaskService : ITaskService
 {
     private readonly ITaskRepository _repository;
-    private readonly TaskClassifierFactory _classifier;
-    public TaskService(ITaskRepository repository, TaskClassifierFactory classifier) {
+    private readonly ITaskClassifierFactory _classifier;
+    public TaskService(ITaskRepository repository, ITaskClassifierFactory classifier) {
 
         _repository = repository;
         _classifier = classifier;

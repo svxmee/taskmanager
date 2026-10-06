@@ -126,8 +126,30 @@ public class KeywordTaskClassifier : ITaskClassifier
                 int days = int.Parse(match.Groups[1].Value);
                 deadline = DateTime.Today.AddDays(days);
             }
-        }
+            else
+            {
+                Match dateMatch = Regex.Match(textLower, @"\b(\d{1,2})\.(\d{1,2})(?:\.(\d{4}))?\b");
 
+                if (dateMatch.Success)
+                {
+                    int day = int.Parse(dateMatch.Groups[1].Value);
+                    int month = int.Parse(dateMatch.Groups[2].Value);
+
+                    int year;
+
+                    if (dateMatch.Groups[3].Success)
+                    {
+                        year = int.Parse(dateMatch.Groups[3].Value);
+                    }
+                    else
+                    {
+                        year = DateTime.Today.Year;
+                    }
+
+                    deadline = new DateTime(year, month, day);
+                }
+            }
+        }
         TaskClassification result = new TaskClassification
         {
             Category = category,

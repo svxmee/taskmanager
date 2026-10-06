@@ -147,10 +147,29 @@ function createCard(task, index) {
   return fragment;
 }
 
+// Ключ сортировки по сроку: чем раньше дедлайн, тем меньше значение.
+// Задачи без срока (или с некорректной датой) считаются «бесконечными» и уезжают вниз.
+function deadlineTime(task) {
+  if (!task.deadline) return Number.POSITIVE_INFINITY;
+  const time = new Date(task.deadline).getTime();
+  return Number.isNaN(time) ? Number.POSITIVE_INFINITY : time;
+}
+
+// Сортировка: сначала активные (выполненные — вниз), затем по сроку (ближе срок — выше)
+function compareTasks(a, b) {
+  if (a.isCompleted !== b.isCompleted) {
+    return Number(a.isCompleted) - Number(b.isCompleted);
+  }
+  const deadlineA = deadlineTime(a);
+  const deadlineB = deadlineTime(b);
+  if (deadlineA === deadlineB) return 0;
+  return deadlineA - deadlineB;
+}
+
 function render() {
   el.list.innerHTML = "";
-  // Выполненные задачи уходят вниз (порядок внутри каждой группы сохраняется)
-  const ordered = [...tasks].sort((a, b) => Number(a.isCompleted) - Number(b.isCompleted));
+  // Ближе срок — выше задача; выполненные и без срока — в конце
+  const ordered = [...tasks].sort(compareTasks);
   ordered.forEach((task, index) => el.list.appendChild(createCard(task, index)));
 
   el.count.textContent = tasks.length ? `${tasks.length} ${tasksWord(tasks.length)}` : "";

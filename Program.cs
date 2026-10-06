@@ -16,7 +16,7 @@ builder.Services.AddScoped<ITaskService, TaskService>();
 builder.Services.AddScoped<ITaskRepository, TaskRepository>();
 builder.Services.AddScoped<AiTaskClassifier>();
 builder.Services.AddScoped<KeywordTaskClassifier>();
-builder.Services.AddScoped<TaskClassifierFactory>();
+builder.Services.AddScoped<ITaskClassifierFactory, TaskClassifierFactory>();
 builder.Services.AddOpenApi();
 
 builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));

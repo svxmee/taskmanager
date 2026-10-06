@@ -2,7 +2,7 @@ using TaskManager.Models;
 
 namespace TaskManager.Classification;
 
-public class TaskClassifierFactory
+public class TaskClassifierFactory : ITaskClassifierFactory
 {
     private readonly AiTaskClassifier _aiClassifier;
     private readonly KeywordTaskClassifier _keywordClassifier;
