@@ -37,9 +37,20 @@ async function apiRequest(url, options = {}) {
   try {
     response = await fetch(url, options);
   } catch {
-    throw new Error("Нет связи с сервером. Запущен ли backend?");
+    throw new Error("Нет связи с сервером.");
   }
-  if (!response.ok) throw new Error(`Сервер вернул ошибку ${response.status}`);
+  if (!response.ok) {
+    if (response.status === 400) {
+      throw new Error("Не удалось создать задачу. Проверьте текст задачи")
+    }
+    if (response.status === 404) {
+      throw new Error("Задача не найдена")
+    }
+    if (response.status >= 500) {
+      throw new Error("Не удалось обработать задачу. Попробуйте еще раз")
+    }
+    throw new Error("Не удалось выполнить запрос. Попробуйте еще раз")
+  }
   if (response.status === 204) return null;
   return response.json();
 }

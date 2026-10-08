@@ -23,7 +23,6 @@ public class TaskApiTests : IClassFixture<CustomWebApplicationFactory>
             "classifierType": "KeyWord"
         }
         """;
-
         var content = new StringContent (
             json, 
             System.Text.Encoding.UTF8,
