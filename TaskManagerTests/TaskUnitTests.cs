@@ -1,5 +1,3 @@
-using System.Net.Http.Headers;
-using Microsoft.VisualBasic;
 using Moq;
 using TaskManager.Classification;
 using TaskManager.Data;
@@ -164,7 +162,7 @@ public class TaskServiceTests
     }
     
     [Fact]
-    public void GetTask_FakeTask()
+    public void GetTask_FakeTask() // 5
     {
         var repository = new Mock<ITaskRepository>();
         var factory = new Mock<ITaskClassifierFactory>();
@@ -185,4 +183,45 @@ public class TaskServiceTests
 
         Assert.Null(res);
     }
+
+    [Fact]
+    public void DeleteTask_Check() // 6
+    {
+        var repository = new Mock<ITaskRepository>();
+        var factory = new Mock<ITaskClassifierFactory>();
+
+        repository
+            .Setup(x => x.DeleteTask(1))
+            .Returns(true);
+
+        var service = new TaskService(
+            repository.Object,
+            factory.Object
+        );
+
+        var res = service.DeleteTask(1);
+
+        Assert.True(res);
+    }
+
+    [Fact]
+    public void DeleteTask_NotFound() // 7
+    {
+        var repository = new Mock<ITaskRepository>();
+        var factory = new Mock<ITaskClassifierFactory>();
+
+        repository
+            .Setup(x => x.DeleteTask(9999))
+            .Returns(false);
+
+        var service = new TaskService(
+            repository.Object,
+            factory.Object
+        );
+
+        var res = service.DeleteTask(9999);
+
+        Assert.False(res);
+    }
+
 }
