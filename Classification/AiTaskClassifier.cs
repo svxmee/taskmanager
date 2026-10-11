@@ -14,13 +14,13 @@ public class AiTaskClassifier : ITaskClassifier
     {
         var options = new OpenAIClientOptions
         {
-            Endpoint = new Uri("https://routerai.ru/api/v1")
+            Endpoint = new Uri("https://routerai.ru/api/v1") // если использовать другого провайдера, напр. OpenRouter, то вводить другой BaseUrl
         };
 
-        var credential = new ApiKeyCredential(Environment.GetEnvironmentVariable("ROUTERAI_API_KEY"));
+        var credential = new ApiKeyCredential(Environment.GetEnvironmentVariable("AI_API_KEY"));
 
         ChatClient client = new(
-            model: "anthropic/claude-haiku-5.5",
+            model: "anthropic/claude-haiku-5.5", // для использования другой модели, вставить в кавычки нужную модель
             credential: credential,
             options: options);
             

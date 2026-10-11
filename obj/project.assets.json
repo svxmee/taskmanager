@@ -3608,11 +3608,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\matve\\OneDrive\\Рабочий стол\\работа\\ДДС Урал практика\\TaskManager\\TaskManager.csproj",
+      "projectUniqueName": "C:\\Users\\matve\\OneDrive\\Рабочий стол\\dev\\ДДС Урал практика\\TaskManager\\TaskManager.csproj",
       "projectName": "TaskManager",
-      "projectPath": "C:\\Users\\matve\\OneDrive\\Рабочий стол\\работа\\ДДС Урал практика\\TaskManager\\TaskManager.csproj",
+      "projectPath": "C:\\Users\\matve\\OneDrive\\Рабочий стол\\dev\\ДДС Урал практика\\TaskManager\\TaskManager.csproj",
       "packagesPath": "C:\\Users\\matve\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\matve\\OneDrive\\Рабочий стол\\работа\\ДДС Урал практика\\TaskManager\\obj\\",
+      "outputPath": "C:\\Users\\matve\\OneDrive\\Рабочий стол\\dev\\ДДС Урал практика\\TaskManager\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\matve\\AppData\\Roaming\\NuGet\\NuGet.Config"
