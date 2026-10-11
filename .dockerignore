@@ -1,0 +1,11 @@
+.env
+.git/
+.gitignore
+bin/
+obj/
+**/bin/
+**/obj/
+tasks.db
+test.db
+.vs/
+.vscode/

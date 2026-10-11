@@ -38,7 +38,7 @@ public class TaskApiTests : IClassFixture<CustomWebApplicationFactory>
     }
 
     [Fact]
-    public async Task CreateTask_EmptyText()
+    public async Task CreateTask_EmptyText() // 2
     {
         var client = _factory.CreateClient();
 
@@ -60,7 +60,7 @@ public class TaskApiTests : IClassFixture<CustomWebApplicationFactory>
     }
 
     [Fact]
-    public async Task GetTask_ReturnsTask()
+    public async Task GetTask_ReturnsTask() // 3
     {
         var client = _factory.CreateClient();
 
@@ -74,7 +74,7 @@ public class TaskApiTests : IClassFixture<CustomWebApplicationFactory>
     }
 
     [Fact]
-    public async Task GetTask_NotFound()
+    public async Task GetTask_NotFound() // 4
     {
         var client = _factory.CreateClient();
         var response = await client.GetAsync("/api/Tasks/124443");
