@@ -9,7 +9,7 @@ services:
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_HTTP_PORTS: 8080
       ConnectionStrings__DefaultConnection: "Data Source=/app/data/tasks.db"
-      ROUTERAI_API_KEY: ${ROUTERAI_API_KEY:-}
+      ROUTERAI_API_KEY: ${AI_API_KEY:-}
       TZ: Asia/Yekaterinburg
     volumes:
       - taskmanager_data:/app/data
