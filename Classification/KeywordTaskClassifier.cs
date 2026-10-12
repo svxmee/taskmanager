@@ -119,7 +119,7 @@ public class KeywordTaskClassifier : ITaskClassifier
 
         else
         {
-            Match match = Regex.Match(textLower, @"через (\d+) дней?"); // используем regex для определения шаблона "через n дней"
+            Match match = Regex.Match(textLower, @"через\s+(\d+)\s+(?:день|дня|дней)\b"); // используем regex для определения шаблона "через n дней/дня/дней"
 
             if (match.Success)
             {
