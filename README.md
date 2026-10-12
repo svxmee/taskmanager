@@ -263,4 +263,6 @@ dotnet test
 ## Демонстрация
 
 Видео демонстрации работы TaskManager:
-https://github.com/user-attachments/assets/1cc25e68-fbbc-4f5f-8415-51975b5e2c85
+
+https://github.com/user-attachments/assets/c8b4c598-a181-4e68-8087-9e5e6e0976f8
+
