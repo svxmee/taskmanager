@@ -40,18 +40,32 @@ async function apiRequest(url, options = {}) {
     throw new Error("Нет связи с сервером.");
   }
   if (!response.ok) {
+    let errorMessage = "";
+    try {
+      const data = await response.json();
+      errorMessage = data.error || data.title || "";
+    } catch {
+      // Ответ сервера не содержит JSON
+    }
+    if (errorMessage) {
+      throw new Error(errorMessage);
+    }
     if (response.status === 400) {
-      throw new Error("Не удалось создать задачу. Проверьте текст задачи")
+      throw new Error("Не удалось создать задачу. Проверьте текст задачи");
     }
     if (response.status === 404) {
-      throw new Error("Задача не найдена")
+      throw new Error("Задача не найдена");
     }
     if (response.status >= 500) {
-      throw new Error("Не удалось обработать задачу. Попробуйте еще раз")
+      throw new Error("Не удалось обработать задачу. Попробуйте ещё раз");
     }
-    throw new Error("Не удалось выполнить запрос. Попробуйте еще раз")
+    throw new Error("Не удалось выполнить запрос. Попробуйте ещё раз");
   }
-  if (response.status === 204) return null;
+
+  if (response.status === 204) {
+    return null;
+  }
+
   return response.json();
 }
 

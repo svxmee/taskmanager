@@ -1,32 +1,26 @@
 using TaskManager.Models;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace TaskManager.Classification;
 
 public class TaskClassifierFactory : ITaskClassifierFactory
 {
-    private readonly AiTaskClassifier _aiClassifier;
-    private readonly KeywordTaskClassifier _keywordClassifier;
+    private readonly IServiceProvider _serviceProvider;
 
-    public TaskClassifierFactory(
-        AiTaskClassifier aiClassifier,
-        KeywordTaskClassifier keywordClassifier)
+    public TaskClassifierFactory(IServiceProvider serviceProvider)
     {
-        _aiClassifier = aiClassifier;
-        _keywordClassifier = keywordClassifier;
+        _serviceProvider = serviceProvider;
     }
 
     public ITaskClassifier GetTaskClassifier(ClassifierType type)
     {
-        if (type == ClassifierType.AI)
+        string key = type switch
         {
-            return _aiClassifier;
-        }
+            ClassifierType.AI => "AI",
+            ClassifierType.KeyWord => "Keyword",
+            _ => throw new ArgumentException("Неизвестный тип классификатора")
+        };
 
-        if (type == ClassifierType.KeyWord)
-        {
-            return _keywordClassifier;
-        }
-
-        throw new ArgumentException("Неизвестный тип классификатора");
+        return _serviceProvider.GetRequiredKeyedService<ITaskClassifier>(key);
     }
 }

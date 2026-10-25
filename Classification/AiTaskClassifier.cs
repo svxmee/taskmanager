@@ -3,6 +3,7 @@ using System.ClientModel;
 using OpenAI;
 using OpenAI.Chat;
 using Microsoft.VisualBasic;
+using SQLitePCL;
 
 
 namespace TaskManager.Classification;
@@ -12,15 +13,24 @@ public class AiTaskClassifier : ITaskClassifier
     
     public TaskClassification Classify(string text)
     {
+        string? baseUrl = Environment.GetEnvironmentVariable("BASE_URL"); 
+        if (string.IsNullOrWhiteSpace(baseUrl) || !Uri.TryCreate(baseUrl, UriKind.Absolute, out Uri? uri) || uri.Scheme != Uri.UriSchemeHttps) throw new InvalidOperationException("Base-URL должен содержать корректный Https адрес");
+
         var options = new OpenAIClientOptions
         {
-            Endpoint = new Uri("https://routerai.ru/api/v1") // если использовать другого провайдера, напр. OpenRouter, то вводить другой BaseUrl
+            Endpoint = uri
         };
 
-        var credential = new ApiKeyCredential(Environment.GetEnvironmentVariable("AI_API_KEY"));
+        string? apiKey = Environment.GetEnvironmentVariable("AI_API_KEY");
+        if(string.IsNullOrWhiteSpace(apiKey)) throw new InvalidOperationException("AI-классификатор не может быть создан из-за отсутствия API-ключа");
+        
+        var credential = new ApiKeyCredential(apiKey);
+
+        string? aiModel = Environment.GetEnvironmentVariable("AI_MODEL");
+        if (string.IsNullOrWhiteSpace(aiModel)) throw new InvalidOperationException("AI-модель не выбрана");
 
         ChatClient client = new(
-            model: "anthropic/claude-haiku-5.5", // для использования другой модели, вставить в кавычки нужную модель
+            model: aiModel,
             credential: credential,
             options: options);
             
@@ -28,62 +38,78 @@ public class AiTaskClassifier : ITaskClassifier
         var currentDayOfWeek = DateTimeOffset.Now.ToString("dddd", new System.Globalization.CultureInfo("ru-RU"));
         List<ChatMessage> messages = [
             new SystemChatMessage(
-                "Ты классификатор задач. Для каждой задачи определи категорию, приоритет и дедлайн.\n" +
+                "Ты классификатор задач. Определи категорию, приоритет и дедлайн.\n" +
                 "Категории: Study, Work, Shopping, Personal, Other.\n" +
-                "Определяй категорию по основной цели задачи и контексту, а не по отдельным словам или глаголам.\n" +
-                "Study - учебные задания, подготовка к экзаменам, повторение лекций, выполнение лабораторных и курсовых работ в рамках обучения.\n" +
-                "Work - профессиональные обязанности, рабочие проекты, отчёты по работе, обслуживание рабочего оборудования и задачи, связанные с трудовой деятельностью или практикой.\n" +
-                "Shopping - покупка товаров, заказ продуктов и выбор вещей для приобретения.\n" +
-                "Personal - личные дела, здоровье, спорт, отдых, бытовые обязанности и организация личной жизни.\n" +
-                "Other - понятные задачи, которые не относятся к Study, Work, Shopping или Personal. Это полноценная категория для самостоятельных исследований, технических экспериментов, общих познавательных задач и других занятий без учебного, рабочего или личного контекста.\n" +
-                "Не выбирай Study только потому, что в задаче встречаются слова «изучить», «проверить», «составить», «список», «сравнить» или «подготовить».\n" +
-                "Примеры: «подготовиться к экзамену» — Study; «проверить рабочее оборудование» — Work; «составить план тренировок» — Personal; «купить наушники» — Shopping; «изучить устройство старого радиоприёмника для общего интереса» — Other.\n" +
-                "Если задача понятна, но её цель не позволяет обоснованно отнести её к первым четырём категориям, выбирай Other. Не придумывай учебный, рабочий или личный контекст, которого нет в тексте.\n" +
-                "Приоритеты: Low, Medium, High.\n" +
-                $"Текущая дата и время: {currentDateTime}.\n" +
-                $"Сегодня день недели: {currentDayOfWeek}.\n" +
-                "Если в тексте соддержится любой текст, который похож на бессмыслицу, набор символов или не имеет понятного смысла то верни: INVALID \n" +
-                "Используй это время для определения относительных дедлайнов по типу: сегодня, завтра, послезавтра, через n дней и т.д.\n" +
-                "Дедлайн указывай только тогда, когда пользователь явно указал дату или срок в тексте задачи.\n" +
-                "Если в тексте нет явного указания на дату или срок, Deadline должен быть пустым.\n" +
-                "Никогда не придумывай дедлайн самостоятельно и не устанавливай его по смыслу задачи.\n" +
-                "Например: \"сходить в магазин\" - Deadline пустой.\n" +
-                "Если в задаче нет даты или срока, категорически запрещено указывать текущую или ближайшую дату.\n" +
-                "\"купить молоко завтра\" - Deadline = дата завтрашнего дня.\n" +
-                "\"сдать отчет до пятницы\" - Deadline = дата ближайшей будущей пятницы.\n" +
-                "Под ближайшей будущей пятницей понимай первую пятницу, которая наступит после текущей даты.\n" +
-                "Если сегодня пятница, для выражения \"до пятницы\" выбирай пятницу следующей недели.\n" +
-                "Обязательно вычисляй дату по календарю, а не прибавляй приблизительное количество дней.\n" +
-                "Проверь, что полученная дата действительно соответствует указанному дню недели.\n" +
-                "Дедлайн должен быть отдан в формате ДД.ММ.ГГГГ и ничего больше.\n" + 
-                "При определении сложных календарных дат сначала точно вычисляй дату по календарю, а не приблизительно.\n" +
-                "Для выражений вида \"первый/второй/третий/четвертый день недели следующего месяца\" сначала определи следующий календарный месяц, затем найди все вхождения указанного дня недели в этом месяце и выбери нужное по порядковому номеру.\n" +
-                "Например, если сегодня 03.10.2026, то второй четверг следующего месяца — 12.11.2026.\n" +
-                "Не заменяй календарное вычисление приблизительным количеством дней от текущей даты.\n" +
-                "Верни строго одну строку в формате: Study, High, 13.10.2026\n" +
-                "Не добавляй подписи Category:, Priority:, Deadline:, пояснения или Markdown.\n" +
-                "Если дедлайна нет, верни пустое третье поле: Shopping, Medium,\n" +
-                "Если задача бессмысленная, верни только INVALID."
+                "Study - учёба, экзамены, лабораторные и курсовые работы.\n" +
+                "Work - работа, профессиональные обязанности, рабочие проекты и практика.\n" +
+                "Shopping - покупка товаров и выбор вещей для приобретения.\n" +
+                "Personal - здоровье, спорт, отдых, бытовые дела и личная жизнь.\n" +
+                "Other - понятные задачи, не относящиеся к остальным категориям, включая самостоятельные исследования и технические эксперименты без учебного или рабочего контекста.\n" +
+                "Выбирай категорию по цели и контексту, а не по отдельным словам. Не придумывай отсутствующий контекст. Например, «изучить устройство радиоприёмника для интереса» - Other, «подготовиться к экзамену» - Study.\n\n" +
+                "Приоритет: Low, Medium или High. Оценивай важность и срочность задачи по её содержанию. Не считай задачу High только из-за наличия дедлайна.\n\n" +
+                $"Текущие дата и время: {currentDateTime:O}.\n" +
+                $"День недели: {currentDayOfWeek}.\n" +
+                "Определяй относительные сроки по текущей дате и календарю. Например, «завтра» - следующий календарный день, «до пятницы» - ближайшая будущая пятница; если сегодня пятница, выбирай пятницу следующей недели.\n" +
+                "Учитывай календарные месяцы и годы при вычислении сложных дат, включая первый, второй, третий или четвёртый день недели следующего месяца. Проверяй, что дата соответствует указанному дню недели.\n" +
+                "Указывай дедлайн только при явном указании даты или срока в задаче. Если срок не указан, оставляй поле пустым. Никогда не придумывай дату.\n\n" +
+                "Если текст явно бессмысленный, состоит из случайных символов или не содержит понятной задачи, верни только INVALID. Короткие, но понятные задачи допустимы: например, «купить молоко».\n\n" +
+                "Верни строго одну строку: Category, Priority, Deadline.\n" +
+                "Категория и приоритет должны соответствовать разрешённым значениям. Дедлайн - в формате ДД.ММ.ГГГГ либо пустое поле.\n" +
+                "Не добавляй пояснения, подписи, Markdown или другие строки.\n" +
+                "Примеры:\n" +
+                "«подготовиться к экзамену завтра» = Study, High, [дата завтра]\n" +
+                "«купить молоко» = Shopping, Medium,\n" +
+                "«asdfghjkl qwerty 123» = INVALID"
             ),
             new UserChatMessage(text)
         ];
-        ChatCompletion completion = client.CompleteChat(messages);
+        
+        ChatCompletion completion;
 
-        string res = completion.Content[0].Text;
-        Console.WriteLine("AI RESPONSE:");
-        Console.WriteLine(res);
-        string[] parts = res.Split(',');
-        TaskCategory category = Enum.Parse<TaskCategory>(parts[0].Trim());
-        TaskPriority priority = Enum.Parse<TaskPriority>(parts[1].Trim());
+        try
+        {
+            completion = client.CompleteChat(messages);
+        }
+        catch (ClientResultException ex) when (ex.Status == 401)
+        {
+            throw new InvalidOperationException("AI-классификатор не смог подключиться к провайдеру. Проверьте API-ключ", ex);
+        }
+
+        string? res = completion.Content.Count > 0 ? completion.Content[0].Text : null;
+        if (string.IsNullOrWhiteSpace(res)) throw new InvalidOperationException("ИИ вернул пустой ответ");
+        res = res.Trim();
+        Console.WriteLine($"ответ AI: [{res}]");
+        if (res == "INVALID") throw new InvalidOperationException("ИИ не смог классифицировать задачу");
+        
+        
+
+        string[] parts = res.Split(',', StringSplitOptions.None);
+
+        if (parts.Length != 3) throw new InvalidOperationException("ИИ вернул ответ в неверном формате");
+
+        if (!Enum.TryParse(parts[0].Trim(), true, out TaskCategory category) || !Enum.IsDefined(typeof(TaskCategory), category))
+        {
+            throw new InvalidOperationException("ИИ вернул неизвестную категорию");
+        }
+
+        if (!Enum.TryParse(parts[1].Trim(), true, out TaskPriority priority) || !Enum.IsDefined(typeof(TaskPriority), priority)) 
+        {
+            throw new InvalidOperationException("ИИ вернул неизвестный приоритет");
+        }
+
+        string deadlineText = parts[2].Trim();
 
         DateTime? deadline = null;
 
-        if (!string.IsNullOrWhiteSpace(parts[2]))
+        if (!string.IsNullOrWhiteSpace(deadlineText))
         {
-            deadline = DateTime.ParseExact(
-                parts[2].Trim(),
-                "dd.MM.yyyy",
-                System.Globalization.CultureInfo.InvariantCulture);
+            if (!DateTime.TryParseExact(deadlineText, 
+            "dd.MM.yyyy", 
+            System.Globalization.CultureInfo.InvariantCulture,
+            System.Globalization.DateTimeStyles.None,
+            out DateTime parsedDeadline)) throw new InvalidOperationException("ИИ вернул дедлайн в неправильном формате");
+
+            deadline = parsedDeadline;
         }
 
         return new TaskClassification

@@ -20,19 +20,29 @@ public class TasksController : ControllerBase
     [HttpPost]
     public IActionResult CreateTask(CreateTaskRequest request)
     {  
-        if (string.IsNullOrWhiteSpace(request.Text))
-        {
-            return BadRequest(new
-            {
-                error = "Текст задачи не может быть пустым"
-            });
-        }
         var task = new TaskItem
         {
             Text = request.Text
         };
-        var createdTask = _taskService.CreateTask(task, request.ClassifierType);
-        return Ok(createdTask);
+        try
+        {
+            var createdTask = _taskService.CreateTask(task, request.ClassifierType);
+            return Ok(createdTask);
+        }
+        catch (ArgumentException ex)
+        {
+            return BadRequest(new
+            {
+                error = ex.Message
+            });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return StatusCode(503, new
+            {
+                error = ex.Message
+            });
+        }
     }
     
     [HttpGet]

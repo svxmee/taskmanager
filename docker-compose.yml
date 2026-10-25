@@ -10,6 +10,8 @@ services:
       ASPNETCORE_HTTP_PORTS: 8080
       ConnectionStrings__DefaultConnection: "Data Source=/app/data/tasks.db"
       AI_API_KEY: ${AI_API_KEY:-}
+      BASE_URL: ${BASE_URL:-}
+      AI_MODEL: ${AI_MODEL:-}
       TZ: Asia/Yekaterinburg
     volumes:
       - taskmanager_data:/app/data
