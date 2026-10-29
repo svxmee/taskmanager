@@ -12,6 +12,8 @@ obj/
 
 # Environment variables
 .env
+.env.*
+!.env.example
 
 # SQLite temporary files
 *.db-shm

@@ -3,6 +3,7 @@ using TaskManager.Classification;
 using TaskManager.Data;
 using TaskManager.Models;
 using TaskManager.Services;
+using Microsoft.Extensions.Configuration;
 
 namespace TaskManager.Tests;
 
@@ -14,6 +15,7 @@ public class TaskServiceTests
         var repository = new Mock<ITaskRepository>();
         var classifier = new Mock<ITaskClassifier>();
         var factory = new Mock<ITaskClassifierFactory>();
+        var configuration = new Mock<IConfiguration>();
 
         classifier
             .Setup(x => x.Classify("купить молоко"))
@@ -34,7 +36,8 @@ public class TaskServiceTests
 
         var service = new TaskService (
             repository.Object,
-            factory.Object
+            factory.Object,
+            configuration.Object
         );
 
         var task = new TaskItem {
@@ -57,6 +60,7 @@ public class TaskServiceTests
         var repository = new Mock<ITaskRepository>();
         var classifier = new Mock<ITaskClassifier>();
         var factory = new Mock<ITaskClassifierFactory>();
+        var configuration = new Mock<IConfiguration>();
 
         classifier 
             .Setup(x => x.Classify("завтра сделать отчет"))
@@ -76,7 +80,8 @@ public class TaskServiceTests
 
         var service = new TaskService (
             repository.Object,
-            factory.Object
+            factory.Object,
+            configuration.Object
         );
 
         var task = new TaskItem
@@ -100,6 +105,7 @@ public class TaskServiceTests
         var repository = new Mock<ITaskRepository>();
         var classifier = new Mock<ITaskClassifier>();
         var factory = new Mock<ITaskClassifierFactory>();
+        var configuration = new Mock<IConfiguration>();
 
 
         classifier 
@@ -120,7 +126,8 @@ public class TaskServiceTests
 
         var service = new TaskService (
             repository.Object,
-            factory.Object
+            factory.Object,
+            configuration.Object
         );
 
         var task = new TaskItem
@@ -141,6 +148,7 @@ public class TaskServiceTests
     {
         var repository = new Mock<ITaskRepository>();
         var factory = new Mock<ITaskClassifierFactory>();
+        var configuration = new Mock<IConfiguration>();
 
         repository
             .Setup(x => x.GetTask(1))
@@ -152,7 +160,8 @@ public class TaskServiceTests
 
         var service = new TaskService(
             repository.Object,
-            factory.Object
+            factory.Object,
+            configuration.Object
         );
         var res = service.GetTask(1);
 
@@ -166,6 +175,7 @@ public class TaskServiceTests
     {
         var repository = new Mock<ITaskRepository>();
         var factory = new Mock<ITaskClassifierFactory>();
+        var configuration = new Mock<IConfiguration>();
 
         repository
             .Setup(x => x.GetTask(1))
@@ -177,7 +187,8 @@ public class TaskServiceTests
 
         var service = new TaskService(
             repository.Object,
-            factory.Object
+            factory.Object,
+            configuration.Object
         );
         var res = service.GetTask(2);
 
@@ -189,6 +200,7 @@ public class TaskServiceTests
     {
         var repository = new Mock<ITaskRepository>();
         var factory = new Mock<ITaskClassifierFactory>();
+        var configuration = new Mock<IConfiguration>();
 
         repository
             .Setup(x => x.DeleteTask(1))
@@ -196,7 +208,8 @@ public class TaskServiceTests
 
         var service = new TaskService(
             repository.Object,
-            factory.Object
+            factory.Object,
+            configuration.Object
         );
 
         var res = service.DeleteTask(1);
@@ -209,6 +222,7 @@ public class TaskServiceTests
     {
         var repository = new Mock<ITaskRepository>();
         var factory = new Mock<ITaskClassifierFactory>();
+        var configuration = new Mock<IConfiguration>();
 
         repository
             .Setup(x => x.DeleteTask(9999))
@@ -216,7 +230,8 @@ public class TaskServiceTests
 
         var service = new TaskService(
             repository.Object,
-            factory.Object
+            factory.Object,
+            configuration.Object
         );
 
         var res = service.DeleteTask(9999);
@@ -224,4 +239,90 @@ public class TaskServiceTests
         Assert.False(res);
     }
 
+
+    // тесты только классификатора 
+    [Fact]
+    public void Test_Classify_Preparat()
+    {
+        var classifier = new KeywordTaskClassifier();
+
+        var res = classifier.Classify("купить препарат");
+
+        Assert.Equal(TaskCategory.Shopping, res.Category);
+    }
+
+    [Fact]
+    public void Test_Classify_Svodit()
+    {
+        var classifier = new KeywordTaskClassifier();
+        
+        var res = classifier.Classify("сводить сына к врачу");
+
+        Assert.Equal(TaskCategory.Personal, res.Category);
+    }
+
+    [Theory]
+    [InlineData("не срочно купить хлеб")]
+    [InlineData("неважно, купить хлеб")]
+    [InlineData("необязательно купить хлеб")]
+
+    public void Test_Classify_Nesrochno(string text)
+    {
+        var classifier = new KeywordTaskClassifier();
+
+        var res = classifier.Classify(text);
+
+        Assert.Equal(TaskPriority.Low, res.Priority);
+    }
+
+    [Fact]
+    public void Test_Classify_1030()
+    {
+        var classifier = new KeywordTaskClassifier();
+
+        var exception = Record.Exception(() =>
+        {
+            classifier.Classify("созвон в 10.30");
+        });
+
+        Assert.Contains("10.30", exception.Message);
+    }
+
+    [Fact]
+    public void Test_Classift_Friday()
+    {
+        var classifier = new KeywordTaskClassifier();
+
+        var res = classifier.Classify("сделать отчет до пятницы");
+
+        int daysUntilFriday = ((int)DayOfWeek.Friday - (int)DateTime.Today.DayOfWeek + 7) % 7; 
+
+        if (daysUntilFriday == 0) daysUntilFriday = 7;
+
+        var expectedFriday = DateTime.Today.AddDays(daysUntilFriday);
+
+        Assert.Equal(res.Deadline, expectedFriday.Date);
+    }
+
+    [Fact]
+    public void CreateTask_Empty()
+    {
+        var repository = new Mock<ITaskRepository>();
+        var classifier = new Mock<ITaskClassifier>();
+        var factory = new Mock<ITaskClassifierFactory>();
+        var configuration = new Mock<IConfiguration>();
+
+        var service = new TaskService (
+            repository.Object,
+            factory.Object,
+            configuration.Object
+        );
+
+        var task = new TaskItem
+        {
+            Text = ""
+        };
+
+        Assert.Throws<ArgumentException>(() => service.CreateTask(new TaskItem { Text = ""}, ClassifierType.KeyWord));
+    }
 }

@@ -38,7 +38,7 @@ public class KeywordTaskClassifier : ITaskClassifier
         };
 
         string[] personalWords = {
-            "уборк", "помыт", "почин", "квартир", "дом",
+            "уборк", "помыт", "почин", "квартир", "дом", 
             "спорт", "трениров", "зал", "врач", "парикмахер",
             "документ", "паспорт", "звон", "встреч", "отдых",
             "погуля", "друз", "семь"
@@ -154,7 +154,18 @@ public class KeywordTaskClassifier : ITaskClassifier
 
             if (match.Success)
             {
-                int days = int.Parse(match.Groups[1].Value);
+                if (!int.TryParse(match.Groups[1].Value, out int days))
+                {
+                    throw new ArgumentException("Количество дней слишком большое или указано неверно");
+                }
+
+                int maxDays = (DateTime.MaxValue.Date - DateTime.Today).Days;
+                Console.WriteLine($"maxDays = {maxDays}, days = {days}");
+                if (days > maxDays)
+                {
+                    throw new ArgumentException($"Нельзя указать дедлайн дальше чем через {maxDays} дней");
+                }
+
                 deadline = DateTime.Today.AddDays(days);
             }
             else

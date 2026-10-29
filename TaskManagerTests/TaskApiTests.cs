@@ -64,20 +64,41 @@ public class TaskApiTests : IClassFixture<CustomWebApplicationFactory>
     {
         var client = _factory.CreateClient();
 
-        var response = await client.GetAsync("/api/Tasks/1");
+        var json = """
+        {
+            "text": "тестовая задача",
+            "classifierType": "KeyWord"
+        
+        }
+        """;
+
+        var content = new StringContent(
+            json,
+            System.Text.Encoding.UTF8,
+            "application/json");
+        var createResponse = await client.PostAsync("/api/Tasks", content);
+
+        Assert.Equal(HttpStatusCode.OK, createResponse.StatusCode);
+
+        var createBody = await createResponse.Content.ReadAsStringAsync();
+
+        using var document = System.Text.Json.JsonDocument.Parse(createBody);
+        var id = document.RootElement.GetProperty("id").GetInt32();
+
+        var response = await client.GetAsync($"/api/Tasks/{id}");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
         var responseBody = await response.Content.ReadAsStringAsync();
-
-        Assert.Contains("\"id\":1", responseBody);
+        Assert.Contains("тестовая задача", responseBody);
+        Assert.Contains($"\"id\":{id}", responseBody);
     }
 
     [Fact]
     public async Task GetTask_NotFound() // 4
     {
         var client = _factory.CreateClient();
-        var response = await client.GetAsync("/api/Tasks/124443");
+        var response = await client.GetAsync("/api/Tasks/0");
         
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
 
