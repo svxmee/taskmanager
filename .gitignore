@@ -22,3 +22,10 @@ obj/
 # OS
 Thumbs.db
 .DS_Store
+
+*.db
+**/bin/
+**/obj/
+*.db
+*.db-shm
+*.db-wal
