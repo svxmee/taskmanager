@@ -14,6 +14,15 @@ public class KeywordTaskClassifier : ITaskClassifier
             RegexOptions.IgnoreCase
         );
     }
+
+    private bool ContainsExactWord(string text, string word)
+    {
+        return Regex.IsMatch(
+            text,
+            $@"\b{Regex.Escape(word)}\b",
+            RegexOptions.IgnoreCase
+        );
+    }
     public TaskClassification Classify(string text)
     {
         string textLower = text.ToLower();
@@ -106,41 +115,54 @@ public class KeywordTaskClassifier : ITaskClassifier
 
         DateTime? deadline = null;
 
-        string[] daysOfWeek = {
-            "понедельник", "вторник", "сред", "четверг", "пятниц", "суббот", "воскресен"
+        string[] daysOfWeek =
+        {
+            "понедельник", "понедельника", "понедельнику", "понедельником", "понедельнике",
+
+            "вторник", "вторника", "вторнику","вторником", "вторнике",
+
+            "среда", "среды", "среде", "среду", "средой",
+
+            "четверг", "четверга", "четвергу", "четвергом", "четверге",
+
+            "пятница", "пятницы", "пятнице", "пятницу", "пятницей",
+
+            "суббота", "субботы", "субботе", "субботу", "субботой",
+
+            "воскресенье", "воскресенья", "воскресенью", "воскресеньем", "воскресенье"
         };
 
-        if (textLower.Contains("сегодня"))
+        if (ContainsExactWord(textLower, "сегодня"))
         {
             deadline = DateTime.Today;
         }
 
-        else if (textLower.Contains("послезавтра"))
+        else if (ContainsExactWord(textLower, "послезавтра"))
         {
             deadline = DateTime.Today.AddDays(2);
         }
 
-        else if (textLower.Contains("завтра"))
+        else if (ContainsExactWord(textLower, "завтра"))
         {
             deadline = DateTime.Today.AddDays(1);
         }
         
-        else if (textLower.Contains("через неделю"))
+        else if (ContainsExactWord(textLower, "через неделю"))
         {
             deadline = DateTime.Today.AddDays(7);
         }
 
-        else if (daysOfWeek.Any(word => ContainsWord(textLower, word)))
+        else if (daysOfWeek.Any(word => ContainsExactWord(textLower, word)))
         {
             DayOfWeek targetDay;
             
-            if (textLower.Contains("понедельник")) targetDay = DayOfWeek.Monday;
-            else if (textLower.Contains("вторник")) targetDay = DayOfWeek.Tuesday;
-            else if (textLower.Contains("сред")) targetDay = DayOfWeek.Wednesday;
-            else if (textLower.Contains("четверг")) targetDay = DayOfWeek.Thursday;
-            else if (textLower.Contains("пятниц")) targetDay = DayOfWeek.Friday;
-            else if (textLower.Contains("суббот")) targetDay = DayOfWeek.Saturday;
-            else if (textLower.Contains("воскресен")) targetDay = DayOfWeek.Sunday;
+            if (ContainsWord(textLower, "понедельник")) targetDay = DayOfWeek.Monday;
+            else if (ContainsWord(textLower, "вторник")) targetDay = DayOfWeek.Tuesday;
+            else if (ContainsWord(textLower, "сред")) targetDay = DayOfWeek.Wednesday;
+            else if (ContainsWord(textLower, "четверг")) targetDay = DayOfWeek.Thursday;
+            else if (ContainsWord(textLower, "пятниц")) targetDay = DayOfWeek.Friday;
+            else if (ContainsWord(textLower, "суббот")) targetDay = DayOfWeek.Saturday;
+            else if (ContainsWord(textLower, "воскресен")) targetDay = DayOfWeek.Sunday;
             else targetDay = DayOfWeek.Sunday;
             int daysUntilTarget = ((int)targetDay - (int)DateTime.Today.DayOfWeek + 7) % 7; 
 
